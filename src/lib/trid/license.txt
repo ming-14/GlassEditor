@@ -1,0 +1,25 @@
+TrID (C) 2003-26 By Marco Pontello
+
+Info: http://mark0.net/soft-trid-e.html
+E-Mail: marcopon@gmail.com
+
+This program is dual-licensed.
+
+For personal or non-commercial use, TrID is free software, 
+licensed under the GNU AGPLv3. See: <http://www.gnu.org/licenses/>
+
+For commercial use, of the program or the filetypes definitions,
+a separate license is needed.
+Commercial use includes any use for profit, business-related
+activities, or by for-profit entities.
+Contact the author at: marcopon@gmail.com
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+
+The program can be freely distribuited and is freeware for non commercial,
+personal, research and educational use.
+Contact the author for commercial use or commercialization of TrID or
+TrID's definitions and contained informations.

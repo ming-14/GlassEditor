@@ -1,0 +1,8 @@
+PyQt5>=5.15
+PyQt-Fluent-Widgets>=1.7
+loguru>=0.7
+pygments>=2.17
+chardet>=5.0
+atomicwrites>=1.4
+pydantic-settings>=2.0
+click>=8.1

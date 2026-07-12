@@ -1,0 +1,8 @@
+[project]
+name = "GlassEditor"
+version = "1.0.0"
+description = "琉璃编辑器 - 轻量级文本编辑器"
+requires-python = ">=3.11"
+
+[project.scripts]
+glasseditor = "src.main:main"

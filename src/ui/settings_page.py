@@ -1,0 +1,361 @@
+from typing import Any, Dict, Optional
+
+from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtGui import QFont, QFontDatabase
+from PyQt5.QtWidgets import (
+    QVBoxLayout, QWidget,
+    QTableWidgetItem,
+)
+
+from qfluentwidgets import (
+    SpinBox, ComboBox,
+    ScrollArea, StrongBodyLabel,
+    TableWidget, FluentIcon,
+    SettingCard, SwitchSettingCard, SettingCardGroup,
+)
+
+from src.infrastructure.logger import get_logger
+from src.infrastructure.shortcut_registry import ShortcutRegistry
+from src.service.config_service import ConfigService
+
+_logger = get_logger("SettingsPage")
+
+
+class _ComboBoxSettingCard(SettingCard):
+
+    def __init__(self, icon, title, content=None, parent=None):
+        super().__init__(icon, title, content, parent)
+        self.comboBox = ComboBox(self)
+        self.hBoxLayout.addWidget(self.comboBox, 0, Qt.AlignRight)
+        self.hBoxLayout.addSpacing(16)
+
+
+class _FontComboSettingCard(SettingCard):
+
+    def __init__(self, icon, title, content=None, parent=None):
+        super().__init__(icon, title, content, parent)
+        self.comboBox = ComboBox(self)
+        self.comboBox.setMinimumWidth(200)
+        db = QFontDatabase()
+        families = db.families()
+        monospaced = [f for f in families if db.isFixedPitch(f)]
+        scalable = [f for f in families if db.isSmoothlyScalable(f)]
+        merged = sorted(set(monospaced + scalable))
+        for f in merged:
+            self.comboBox.addItem(f)
+        self.hBoxLayout.addWidget(self.comboBox, 0, Qt.AlignRight)
+        self.hBoxLayout.addSpacing(16)
+
+
+class _SpinBoxSettingCard(SettingCard):
+
+    def __init__(self, icon, title, content=None, suffix="", parent=None):
+        super().__init__(icon, title, content, parent)
+        self.spinBox = SpinBox(self)
+        self.spinBox.setFixedWidth(100)
+        self.hBoxLayout.addWidget(self.spinBox, 0, Qt.AlignRight)
+        if suffix:
+            from qfluentwidgets import BodyLabel
+            label = BodyLabel(suffix, self)
+            label.setStyleSheet("color: #888;")
+            self.hBoxLayout.addWidget(label, 0, Qt.AlignRight)
+        self.hBoxLayout.addSpacing(16)
+
+
+
+
+
+class SettingsPage(ScrollArea):
+
+    settings_changed = pyqtSignal(dict)
+    theme_change_requested = pyqtSignal(str)
+
+    def __init__(
+        self,
+        parent: Optional[QWidget] = None,
+        config_service: Optional[ConfigService] = None,
+        shortcut_registry: Optional[ShortcutRegistry] = None,
+    ):
+        super().__init__(parent)
+        self.setObjectName("settingsPage")
+        self._config_service = config_service
+        self._shortcut_registry = shortcut_registry or ShortcutRegistry()
+
+        self._original_settings: Dict[str, Any] = {}
+        self._current_settings: Dict[str, Any] = {}
+        self._applying = False
+
+        self._build_content()
+        self._load_current_settings()
+        self._apply_settings_to_ui()
+        self._connect_auto_save()
+
+        self.setWidgetResizable(True)
+        self.setStyleSheet("QScrollArea{border: none; background: transparent}")
+        self.enableTransparentBackground()
+
+    def _build_content(self) -> None:
+        content = QWidget()
+        content.setStyleSheet("QWidget{background: transparent}")
+        outer = QVBoxLayout(content)
+        outer.setContentsMargins(36, 28, 36, 28)
+        outer.setSpacing(4)
+
+        title = StrongBodyLabel("设置")
+        title.setStyleSheet("font-size: 24px; font-weight: bold; padding-bottom: 12px;")
+        outer.addWidget(title)
+
+        self._appearance_group = self._create_appearance_group()
+        self._editor_group = self._create_editor_group()
+        self._tray_group = self._create_tray_group()
+        self._shortcut_group = self._create_shortcut_group(content)
+
+        outer.addWidget(self._appearance_group)
+        outer.addSpacing(16)
+        outer.addWidget(self._editor_group)
+        outer.addSpacing(16)
+        outer.addWidget(self._tray_group)
+        outer.addSpacing(16)
+        outer.addWidget(self._shortcut_group)
+        outer.addStretch()
+
+        self.setWidget(content)
+
+    # ------------------------------------------------------------------
+    # Setting card groups
+    # ------------------------------------------------------------------
+
+    def _create_appearance_group(self) -> SettingCardGroup:
+        group = SettingCardGroup("外观", self)
+
+        self._font_card = _FontComboSettingCard(
+            FluentIcon.FONT, "字体", "选择编辑器字体", parent=group
+        )
+        group.addSettingCard(self._font_card)
+
+        self._font_size_card = _SpinBoxSettingCard(
+            FluentIcon.FONT_SIZE, "字号", "编辑器字体大小 (8 ~ 24)", "px", parent=group
+        )
+        self._font_size_card.spinBox.setRange(8, 24)
+        group.addSettingCard(self._font_size_card)
+
+        self._theme_card = _ComboBoxSettingCard(
+            FluentIcon.CONSTRACT, "主题", "切换应用主题", parent=group
+        )
+        self._theme_card.comboBox.addItem("浅色", userData="light")
+        self._theme_card.comboBox.addItem("深色", userData="dark")
+        self._theme_card.comboBox.addItem("高对比度", userData="high_contrast")
+        group.addSettingCard(self._theme_card)
+
+        self._tab_width_card = _SpinBoxSettingCard(
+            FluentIcon.ALIGNMENT, "Tab 宽度", "按 Tab 键插入的空格数 (2 ~ 8)", "个空格", parent=group
+        )
+        self._tab_width_card.spinBox.setRange(2, 8)
+        group.addSettingCard(self._tab_width_card)
+
+        self._reduce_anim_card = SwitchSettingCard(
+            FluentIcon.MOVE, "减少动画", "减少界面过渡动画效果", parent=group
+        )
+        group.addSettingCard(self._reduce_anim_card)
+
+        return group
+
+    def _create_editor_group(self) -> SettingCardGroup:
+        group = SettingCardGroup("编辑行为", self)
+
+        self._line_numbers_card = SwitchSettingCard(
+            FluentIcon.LABEL, "显示行号", "在编辑器左侧显示行号", parent=group
+        )
+        group.addSettingCard(self._line_numbers_card)
+
+        self._word_wrap_card = SwitchSettingCard(
+            FluentIcon.SYNC, "自动换行", "超出编辑器宽度时自动折行显示", parent=group
+        )
+        group.addSettingCard(self._word_wrap_card)
+
+        self._auto_indent_card = SwitchSettingCard(
+            FluentIcon.ROTATE, "自动缩进", "换行时自动保持上一行的缩进级别", parent=group
+        )
+        group.addSettingCard(self._auto_indent_card)
+
+        self._bracket_card = SwitchSettingCard(
+            FluentIcon.CODE, "括号自动补全", "输入左括号时自动插入右括号", parent=group
+        )
+        group.addSettingCard(self._bracket_card)
+
+        return group
+
+    def _create_tray_group(self) -> SettingCardGroup:
+        group = SettingCardGroup("系统托盘", self)
+
+        self._close_to_tray_card = SwitchSettingCard(
+            FluentIcon.MINIMIZE, "关闭时最小化到托盘",
+            "点击关闭按钮时最小化到系统托盘而非退出程序", parent=group
+        )
+        group.addSettingCard(self._close_to_tray_card)
+
+        self._start_minimized_card = SwitchSettingCard(
+            FluentIcon.APPLICATION, "启动时最小化到托盘",
+            "程序启动时不显示主窗口，仅在系统托盘显示图标", parent=group
+        )
+        group.addSettingCard(self._start_minimized_card)
+
+        return group
+
+    def _create_shortcut_group(self, parent=None) -> SettingCardGroup:
+        group = SettingCardGroup("快捷键", parent)
+
+        self._shortcut_table = TableWidget(group)
+        self._shortcut_table.setColumnCount(3)
+        self._shortcut_table.setHorizontalHeaderLabels(["操作", "快捷键", "默认值"])
+        self._shortcut_table.horizontalHeader().setSectionResizeMode(
+            0, self._shortcut_table.horizontalHeader().Stretch
+        )
+        self._shortcut_table.horizontalHeader().setSectionResizeMode(
+            1, self._shortcut_table.horizontalHeader().Fixed
+        )
+        self._shortcut_table.horizontalHeader().setSectionResizeMode(
+            2, self._shortcut_table.horizontalHeader().Fixed
+        )
+        self._shortcut_table.setColumnWidth(1, 160)
+        self._shortcut_table.setColumnWidth(2, 120)
+        self._shortcut_table.setSelectionBehavior(self._shortcut_table.SelectRows)
+        self._shortcut_table.setEditTriggers(self._shortcut_table.NoEditTriggers)
+        self._shortcut_table.setMinimumHeight(200)
+        self._populate_shortcut_table()
+        group.addSettingCard(self._shortcut_table)
+
+        return group
+
+    def _populate_shortcut_table(self) -> None:
+        all_shortcuts = self._shortcut_registry.get_all()
+        action_names = sorted(all_shortcuts.keys())
+        self._shortcut_table.setRowCount(len(action_names))
+        for row, name in enumerate(action_names):
+            name_item = QTableWidgetItem(name)
+            name_item.setFlags(name_item.flags() & ~Qt.ItemIsEditable)
+            self._shortcut_table.setItem(row, 0, name_item)
+            current_val = all_shortcuts.get(name, "")
+            shortcut_item = QTableWidgetItem(current_val if current_val else "无")
+            shortcut_item.setFlags(shortcut_item.flags() & ~Qt.ItemIsEditable)
+            self._shortcut_table.setItem(row, 1, shortcut_item)
+            default_val = self._shortcut_registry.get_default(name) or ""
+            default_item = QTableWidgetItem(default_val if default_val else "无")
+            default_item.setFlags(default_item.flags() & ~Qt.ItemIsEditable)
+            self._shortcut_table.setItem(row, 2, default_item)
+
+    # ------------------------------------------------------------------
+    # showEvent — refresh on navigate
+    # ------------------------------------------------------------------
+
+    def showEvent(self, event) -> None:
+        super().showEvent(event)
+        self._applying = True
+        self._load_current_settings()
+        self._apply_settings_to_ui()
+        self._applying = False
+
+    # ------------------------------------------------------------------
+    # Settings load / collect / apply to UI
+    # ------------------------------------------------------------------
+
+    def _load_current_settings(self) -> None:
+        if self._config_service:
+            self._original_settings = {
+                "font_family": self._config_service.get("font_family", ""),
+                "font_size": self._config_service.get("font_size", 13),
+                "theme": self._config_service.get("theme", "dark"),
+                "show_line_numbers": self._config_service.get("show_line_numbers", True),
+                "word_wrap": self._config_service.get("word_wrap", False),
+                "auto_indent": self._config_service.get("auto_indent", True),
+                "bracket_completion": self._config_service.get("bracket_completion", True),
+                "tab_width": self._config_service.get("tab_width", 4),
+                "reduce_animation": self._config_service.get("reduce_animation", False),
+                "close_to_tray": self._config_service.get("close_to_tray", False),
+                "start_minimized_to_tray": self._config_service.get("start_minimized_to_tray", False),
+            }
+        else:
+            self._original_settings = {
+                "font_family": "", "font_size": 13, "theme": "dark",
+                "show_line_numbers": True, "word_wrap": False,
+                "auto_indent": True, "bracket_completion": True,
+                "tab_width": 4, "reduce_animation": False,
+                "close_to_tray": False, "start_minimized_to_tray": False,
+            }
+        self._current_settings = dict(self._original_settings)
+
+    def _collect_settings(self) -> Dict[str, Any]:
+        return {
+            "font_family": self._font_card.comboBox.currentText(),
+            "font_size": self._font_size_card.spinBox.value(),
+            "theme": self._theme_card.comboBox.currentData() or "dark",
+            "tab_width": self._tab_width_card.spinBox.value(),
+            "show_line_numbers": self._line_numbers_card.isChecked(),
+            "word_wrap": self._word_wrap_card.isChecked(),
+            "auto_indent": self._auto_indent_card.isChecked(),
+            "bracket_completion": self._bracket_card.isChecked(),
+            "reduce_animation": self._reduce_anim_card.isChecked(),
+            "close_to_tray": self._close_to_tray_card.isChecked(),
+            "start_minimized_to_tray": self._start_minimized_card.isChecked(),
+        }
+
+    def _apply_settings_to_ui(self) -> None:
+        s = self._current_settings
+
+        family = s.get("font_family", "")
+        if family:
+            idx = self._font_card.comboBox.findText(family)
+            if idx >= 0:
+                self._font_card.comboBox.setCurrentIndex(idx)
+
+        self._font_size_card.spinBox.setValue(s.get("font_size", 13))
+
+        theme_value = s.get("theme", "dark")
+        idx = self._theme_card.comboBox.findData(theme_value)
+        if idx >= 0:
+            self._theme_card.comboBox.setCurrentIndex(idx)
+
+        self._tab_width_card.spinBox.setValue(s.get("tab_width", 4))
+
+        self._line_numbers_card.setChecked(s.get("show_line_numbers", True))
+        self._word_wrap_card.setChecked(s.get("word_wrap", False))
+        self._auto_indent_card.setChecked(s.get("auto_indent", True))
+        self._bracket_card.setChecked(s.get("bracket_completion", True))
+        self._reduce_anim_card.setChecked(s.get("reduce_animation", False))
+        self._close_to_tray_card.setChecked(s.get("close_to_tray", False))
+        self._start_minimized_card.setChecked(s.get("start_minimized_to_tray", False))
+
+    # ------------------------------------------------------------------
+    # Auto-save
+    # ------------------------------------------------------------------
+
+    def _connect_auto_save(self) -> None:
+        self._font_card.comboBox.currentTextChanged.connect(self._on_auto_apply)
+        self._font_size_card.spinBox.valueChanged.connect(self._on_auto_apply)
+        self._tab_width_card.spinBox.valueChanged.connect(self._on_auto_apply)
+        self._theme_card.comboBox.currentIndexChanged.connect(self._on_auto_apply)
+        self._theme_card.comboBox.currentIndexChanged.connect(self._on_theme_combo_changed)
+
+        self._line_numbers_card.checkedChanged.connect(lambda _: self._on_auto_apply())
+        self._word_wrap_card.checkedChanged.connect(lambda _: self._on_auto_apply())
+        self._auto_indent_card.checkedChanged.connect(lambda _: self._on_auto_apply())
+        self._bracket_card.checkedChanged.connect(lambda _: self._on_auto_apply())
+        self._reduce_anim_card.checkedChanged.connect(lambda _: self._on_auto_apply())
+        self._close_to_tray_card.checkedChanged.connect(lambda _: self._on_auto_apply())
+        self._start_minimized_card.checkedChanged.connect(lambda _: self._on_auto_apply())
+
+    def _on_auto_apply(self, *args) -> None:
+        if self._applying:
+            return
+        settings = self._collect_settings()
+        if self._config_service:
+            self._config_service.save_settings(settings)
+        self._current_settings = dict(settings)
+        self.settings_changed.emit(settings)
+
+    def _on_theme_combo_changed(self, _index: int) -> None:
+        if self._applying:
+            return
+        theme = self._theme_card.comboBox.currentData()
+        if theme:
+            self.theme_change_requested.emit(theme)
