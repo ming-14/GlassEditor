@@ -1,7 +1,7 @@
 """
 辅助工具服务模块 —— 字数统计、哈希计算、排序、大小写转换等
 
-设计依据: doc/架构设计.md 2.3节 ToolService, doc/功能设计.md 2.6节
+设计依据: docs/架构设计.md 2.3节 ToolService, docs/功能设计.md 2.6节
 """
 
 import hashlib

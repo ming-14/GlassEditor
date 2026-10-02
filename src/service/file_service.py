@@ -1,7 +1,7 @@
 """
 文件服务模块 —— 文件打开、保存、重载、编码检测与最近文件管理
 
-设计依据: doc/架构设计.md 2.3节 FileService, doc/功能设计.md 2.1节
+设计依据: docs/架构设计.md 2.3节 FileService, docs/功能设计.md 2.1节
 """
 
 import os

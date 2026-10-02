@@ -1,7 +1,7 @@
 """
 快捷键注册表 —— 管理快捷键的存储、冲突检测与全局一致性
 
-设计依据: doc/架构设计.md 2.4节 ShortcutRegistry
+设计依据: docs/架构设计.md 2.4节 ShortcutRegistry
 """
 
 import threading

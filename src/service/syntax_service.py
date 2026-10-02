@@ -1,7 +1,7 @@
 """
 语法高亮服务模块 —— 扩展名到语言类型的映射管理
 
-设计依据: doc/架构设计.md 2.3节 SyntaxService
+设计依据: docs/架构设计.md 2.3节 SyntaxService
 """
 
 from typing import Dict, List, Optional

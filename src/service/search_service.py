@@ -4,7 +4,7 @@
 封装正则搜索、匹配定位、批量替换等纯逻辑操作，
 不依赖任何 UI 组件，可被 ActionManager 或 SearchBar 调用。
 
-设计依据: doc/架构设计.md 2.3节 分层设计
+设计依据: docs/架构设计.md 2.3节 分层设计
 """
 
 import re
