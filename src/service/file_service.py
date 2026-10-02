@@ -5,9 +5,9 @@
 """
 
 import os
-from typing import List, Dict, Tuple, Optional
+from typing import List, Tuple, Optional
 
-from PyQt5.QtCore import QObject, pyqtSignal
+from PyQt5.QtCore import QObject
 
 from src.infrastructure.logger import get_logger
 from src.infrastructure.file_io import FileIO

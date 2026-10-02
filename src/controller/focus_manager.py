@@ -6,7 +6,7 @@ FocusManager 位于 Controller 层，维护当前活跃编辑器引用、
 的单一权威。
 """
 
-from typing import Dict, List, Optional, TYPE_CHECKING
+from typing import List, Optional, TYPE_CHECKING
 
 from PyQt5.QtCore import QObject
 

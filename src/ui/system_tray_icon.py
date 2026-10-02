@@ -5,7 +5,6 @@
 """
 
 from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QSystemTrayIcon, QWidget
 
 from qfluentwidgets import RoundMenu, Action, FluentIcon

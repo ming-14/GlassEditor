@@ -375,7 +375,7 @@ class PygmentsHighlighter(QSyntaxHighlighter):
         self._build_format_cache()
         _logger.debug(f"[PygmentsHighlighter] format_cache 已重建 | cache_size={len(self._format_cache)}")
         self.rehighlight()
-        _logger.debug(f"[PygmentsHighlighter] rehighlight 已触发")
+        _logger.debug("[PygmentsHighlighter] rehighlight 已触发")
 
     # 用于跟踪多行 Token 状态
     # state > 0 表示前一块在多行 Token 内

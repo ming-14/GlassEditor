@@ -7,11 +7,10 @@
 """
 
 import os
-from typing import Dict, List, Optional, TYPE_CHECKING
+from typing import Dict, Optional, TYPE_CHECKING
 
 from PyQt5.QtCore import QObject, pyqtSlot
 from PyQt5.QtGui import QKeySequence, QTextCursor
-from PyQt5.QtWidgets import QApplication
 
 from qfluentwidgets import Action, FluentIcon
 
@@ -791,7 +790,7 @@ class ActionManager(QObject):
         content = editor.toPlainText()
         matches, err = self._search_service.find_all(find_text, content, options)
         if err:
-            self._signal_bus.status_message.emit(f"无效的正则表达式", 5000)
+            self._signal_bus.status_message.emit("无效的正则表达式", 5000)
             return
 
         if not self._search_service.has_matches():

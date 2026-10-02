@@ -26,6 +26,10 @@ class AppConstant:
     LARGE_FILE_THRESHOLD = 10 * 1024 * 1024
     ## 语法高亮禁用阈值（字节），5MB
     HIGHLIGHT_DISABLE_THRESHOLD = 5 * 1024 * 1024
+    ## 哈希计算分块读取大小（字节），64KB
+    HASH_CHUNK_SIZE = 64 * 1024
+    ## PDF 导出页边距（毫米）
+    PDF_MARGIN_MM = 15
 
     ## 最近文件列表最大条数
     MAX_RECENT_FILES = 20

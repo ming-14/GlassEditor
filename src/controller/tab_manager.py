@@ -15,6 +15,7 @@ from src.service.syntax_highlighter_manager import SyntaxHighlighterManager
 from src.controller.signal_bus import SignalBus
 
 if TYPE_CHECKING:
+    from PyQt5.QtGui import QSyntaxHighlighter
     from src.ui.editor_tab_widget import EditorTabWidget
     from src.ui.code_editor import CodeEditor
     from src.service.file_service import FileService
@@ -753,7 +754,7 @@ class TabManager(QObject):
                 self._logger.error(f"编码转换前自动保存失败: {save_err}", file=file_path)
                 return False, f"保存失败: {save_err}"
             self.mark_saved(index, file_path)
-            self._logger.info(f"编码转换前自动保存成功", file=file_path)
+            self._logger.info("编码转换前自动保存成功", file=file_path)
 
         # 暂停文件系统监听
         self.pause_file_watcher(file_path)

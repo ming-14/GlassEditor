@@ -10,7 +10,7 @@
 from typing import Any, Dict, Optional
 
 from PyQt5.QtCore import Qt, pyqtSignal
-from PyQt5.QtGui import QFont, QFontDatabase
+from PyQt5.QtGui import QFontDatabase
 from PyQt5.QtWidgets import (
     QVBoxLayout, QWidget,
     QTableWidgetItem,

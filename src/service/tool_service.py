@@ -7,7 +7,7 @@
 import hashlib
 from typing import Dict
 
-from src.infrastructure.logger import get_logger
+from src.infrastructure.app_constants import AppConstant
 
 
 class ToolService:
@@ -16,10 +16,6 @@ class ToolService:
 
     所有方法均为纯文本操作，无UI依赖，方便单元测试。
     """
-
-    def __init__(self):
-        """构造函数"""
-        self._logger = get_logger("ToolService")
 
     @staticmethod
     def count_stats(text: str) -> Dict[str, int]:
@@ -101,7 +97,7 @@ class ToolService:
     def compute_file_hash(
         file_path: str,
         algorithm: str = "md5",
-        chunk_size: int = 64 * 1024,
+        chunk_size: int = AppConstant.HASH_CHUNK_SIZE,
     ) -> str:
         """
         计算文件的哈希值（分块读取，大文件不会整体载入内存）
@@ -110,7 +106,7 @@ class ToolService:
 
         @param file_path: 目标文件路径
         @param algorithm: 哈希算法，支持 'md5', 'sha1', 'sha256'
-        @param chunk_size: 分块读取大小（字节）
+        @param chunk_size: 分块读取大小（字节），默认 AppConstant.HASH_CHUNK_SIZE
         @return: 十六进制哈希字符串，算法不支持时返回空字符串
         @raise OSError: 文件不存在或无法读取，由调用方捕获处理
         """

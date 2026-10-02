@@ -17,9 +17,7 @@ from qfluentwidgets import (
 )
 from src.infrastructure.logger import get_logger
 from src.infrastructure.encoding_utils import (
-    ENCODING_MENU_GROUPS,
     get_display_name,
-    get_status_bar_encoding,
     get_internal_name,
     get_all_available_encodings,
 )

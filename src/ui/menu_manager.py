@@ -11,7 +11,7 @@ from PyQt5.QtGui import QKeySequence
 from PyQt5.QtWidgets import QWidget, QHBoxLayout, QAbstractItemView
 
 from qfluentwidgets import (
-    PushButton, RoundMenu, Action, FluentIcon,
+    PushButton, RoundMenu, Action,
     CheckBox, SearchLineEdit, ListView,
     MessageBoxBase,
 )

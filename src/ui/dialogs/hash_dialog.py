@@ -4,6 +4,7 @@
 支持 MD5、SHA1、SHA256 算法，计算结果可一键复制到剪贴板。
 没有文本输入框，自动根据编辑器上下文计算哈希，支持选中文本/整个文件/整个文本切换。
 文件保存由对话框的"计算"按钮触发，若文件有待保存修改则按钮显示"保存文件并计算"。
+文件哈希经由 QThreadPool 在工作线程异步计算，期间计算按钮与算法/范围选项锁定。
 """
 import os
 from typing import Callable, Optional
@@ -19,8 +20,6 @@ from qfluentwidgets import (
 )
 from src.infrastructure.logger import get_logger
 from src.service.tool_service import ToolService
-
-_logger = get_logger("HashDialog")
 
 # 哈希范围选项
 _SCOPE_SELECTED = "选中文本"
@@ -285,6 +284,13 @@ class HashDialog(MessageBoxBase):
         else:
             self._result_input.setText("无可用数据")
 
+    def _set_controls_enabled(self, enabled: bool) -> None:
+        """计算期间锁定按钮与选项，避免中途切换造成结果与显示不一致"""
+        self._compute_btn.setEnabled(enabled)
+        self._algo_combo.setEnabled(enabled)
+        if hasattr(self, "_scope_combo"):
+            self._scope_combo.setEnabled(enabled)
+
     def _compute_file_hash(self) -> None:
         """计算文件哈希：提交到线程池异步执行，避免阻塞 UI 线程"""
         algo_name = self._algo_combo.currentText()
@@ -293,7 +299,7 @@ class HashDialog(MessageBoxBase):
             return
 
         self._running = True
-        self._compute_btn.setEnabled(False)
+        self._set_controls_enabled(False)
         self._result_input.setPlaceholderText("计算中...")
         worker = _HashWorker(
             self._worker_signals, algo_name, self._file_path, algorithm
@@ -319,14 +325,14 @@ class HashDialog(MessageBoxBase):
     def _on_hash_finished(self, algo_name: str, result: str) -> None:
         """! 工作线程计算完成槽（QueuedConnection 回到主线程）"""
         self._running = False
-        self._compute_btn.setEnabled(True)
+        self._set_controls_enabled(True)
         self._result_input.setText(result)
         self.hash_computed.emit(algo_name, result)
 
     def _on_hash_failed(self, error: str) -> None:
         """! 工作线程计算失败槽（QueuedConnection 回到主线程）"""
         self._running = False
-        self._compute_btn.setEnabled(True)
+        self._set_controls_enabled(True)
         self._logger.error(f"文件哈希计算失败: {error}")
         self._result_input.setText(f"计算失败: {error}")
 

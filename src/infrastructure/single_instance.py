@@ -8,7 +8,6 @@
 
 import json
 import struct
-from typing import Optional
 
 from PyQt5.QtCore import QObject, pyqtSignal, QSharedMemory
 from PyQt5.QtNetwork import QLocalServer, QLocalSocket

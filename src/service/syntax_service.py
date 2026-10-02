@@ -4,7 +4,7 @@
 设计依据: docs/开发规范/设计架构规范.md 3.2节 SyntaxService
 """
 
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 from src.infrastructure.logger import get_logger
 

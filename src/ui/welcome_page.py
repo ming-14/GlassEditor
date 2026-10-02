@@ -6,8 +6,7 @@
 
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout,
-    QTreeWidgetItem, QTableWidgetItem,
+    QWidget, QVBoxLayout, QHBoxLayout, QTableWidgetItem,
 )
 
 from qfluentwidgets import (

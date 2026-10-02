@@ -11,7 +11,7 @@ from PyQt5.QtGui import (
 )
 
 from typing import Dict, List, Tuple, Optional
-from qfluentwidgets import Theme, isDarkTheme, themeColor, PlainTextEdit
+from qfluentwidgets import isDarkTheme, themeColor, PlainTextEdit
 
 from src.infrastructure.logger import get_logger
 from src.infrastructure.app_constants import AppConstant

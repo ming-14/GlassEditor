@@ -9,7 +9,7 @@
 
 from typing import Callable, Dict, Optional, TYPE_CHECKING
 
-from PyQt5.QtGui import QSyntaxHighlighter, QTextDocument
+from PyQt5.QtGui import QSyntaxHighlighter
 
 from src.infrastructure.logger import get_logger
 

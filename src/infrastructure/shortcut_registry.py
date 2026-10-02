@@ -125,7 +125,7 @@ class ShortcutRegistry(metaclass=Singleton):
             existing = self._shortcuts.get(action_name)
             if existing:
                 _logger.debug(
-                    f"Action already registered, preserving user setting",
+                    "Action already registered, preserving user setting",
                     action=action_name,
                     user_shortcut=existing,
                     default=default_shortcut,
@@ -151,7 +151,7 @@ class ShortcutRegistry(metaclass=Singleton):
             self._save_to_settings()
 
             _logger.debug(
-                f"Registered shortcut",
+                "Registered shortcut",
                 action=action_name,
                 shortcut=default_shortcut,
             )
@@ -169,7 +169,7 @@ class ShortcutRegistry(metaclass=Singleton):
                 self._remove_from_reverse_index(action_name, old_shortcut)
                 self._defaults.pop(action_name, None)
                 self._save_to_settings()
-                _logger.debug(f"Unregistered shortcut", action=action_name)
+                _logger.debug("Unregistered shortcut", action=action_name)
 
     def get_shortcut(self, action_name: str) -> Optional[str]:
         """
@@ -228,7 +228,7 @@ class ShortcutRegistry(metaclass=Singleton):
             self._save_to_settings()
 
             _logger.info(
-                f"Updated shortcut",
+                "Updated shortcut",
                 action=action_name,
                 old=old_shortcut,
                 new=new_shortcut,
@@ -255,7 +255,7 @@ class ShortcutRegistry(metaclass=Singleton):
             conflict_actions = self._find_conflict_except(action_name, default)
             if conflict_actions:
                 _logger.warning(
-                    f"Cannot reset to default: conflict detected",
+                    "Cannot reset to default: conflict detected",
                     action=action_name,
                     default=default,
                     conflicting=str(list(conflict_actions)),
@@ -268,7 +268,7 @@ class ShortcutRegistry(metaclass=Singleton):
             self._add_to_reverse_index(action_name, default)
             self._save_to_settings()
 
-            _logger.info(f"Reset shortcut to default", action=action_name, shortcut=default)
+            _logger.info("Reset shortcut to default", action=action_name, shortcut=default)
             return True
 
     def detect_conflicts(self) -> List[Tuple[str, str, List[str]]]:

@@ -7,13 +7,13 @@ import re
 from typing import Optional
 
 from PyQt5.QtWidgets import (
-    QVBoxLayout, QHBoxLayout, QWidget,
+    QHBoxLayout, QWidget,
 )
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QKeyEvent
 
 from qfluentwidgets import (
-    MessageBoxBase, SearchLineEdit, LineEdit, CheckBox, PrimaryPushButton, PushButton,
+    MessageBoxBase, SearchLineEdit, LineEdit, CheckBox, PushButton,
     BodyLabel, isDarkTheme,
 )
 from src.infrastructure.logger import get_logger

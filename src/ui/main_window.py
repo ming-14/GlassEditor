@@ -1889,7 +1889,7 @@ class MainWindow(FluentWindow):
         self._logger.info(f"Language changed: {language}")
         index = self._tab_manager.get_current_index()
         if index < 0:
-            self._logger.debug(f"[高亮] 状态栏语言切换跳过: index<0")
+            self._logger.debug("[高亮] 状态栏语言切换跳过: index<0")
             return
 
         editor = self._tab_manager.get_editor(index)
@@ -2057,7 +2057,11 @@ class MainWindow(FluentWindow):
             printer = QPrinter(QPrinter.HighResolution)
             printer.setOutputFormat(QPrinter.PdfFormat)
             printer.setOutputFileName(file_path)
-            printer.setPageMargins(QMarginsF(15, 15, 15, 15), QPrinter.Millimeter)
+            printer.setPageMargins(
+                AppConstant.PDF_MARGIN_MM, AppConstant.PDF_MARGIN_MM,
+                AppConstant.PDF_MARGIN_MM, AppConstant.PDF_MARGIN_MM,
+                QPrinter.Millimeter,
+            )
 
             doc = editor.document().clone()
             doc.setTextWidth(printer.pageRect(QPrinter.DevicePixel).width())
