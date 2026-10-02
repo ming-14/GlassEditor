@@ -12,9 +12,6 @@ from src.infrastructure.logger import get_logger
 
 _logger = get_logger("encoding_utils")
 
-## 编码转换文件大小上限（50MB），超过此大小禁用编码转换
-ENCODING_CHANGE_MAX_FILE_SIZE = 50 * 1024 * 1024
-
 ## 编码菜单分组定义（分组名 -> 内部编码名列表）
 ENCODING_MENU_GROUPS: Dict[str, List[str]] = {
     "Unicode": [
