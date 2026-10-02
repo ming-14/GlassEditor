@@ -1,7 +1,7 @@
 """
 配置读写模块 —— JSON格式配置文件管理
 
-设计依据: docs/架构设计.md 2.4节 Settings
+设计依据: docs/开发规范/设计架构规范.md 3.1节 Settings
 """
 
 import json

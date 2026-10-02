@@ -1,7 +1,7 @@
 """
 基础文件IO模块 -- 底层文件读写能力
 
-设计依据: docs/架构设计.md 2.4节 FileIO
+设计依据: docs/开发规范/设计架构规范.md 3.1节 FileIO
 """
 
 from pathlib import Path

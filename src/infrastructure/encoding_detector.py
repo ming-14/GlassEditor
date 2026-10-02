@@ -1,7 +1,7 @@
 """
 编码检测模块 -- 自动检测文件编码
 
-设计依据: docs/架构设计.md 2.4节 EncodingDetector
+设计依据: docs/开发规范/设计架构规范.md 3.1节 EncodingDetector
 """
 
 from typing import Tuple, Optional

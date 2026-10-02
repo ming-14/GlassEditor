@@ -5,7 +5,7 @@
 使得 Controller 层（ActionManager）不必直接操作 UI 组件，
 实现分层解耦。
 
-设计依据: docs/架构设计.md 2.3节 分层设计
+设计依据: docs/开发规范/设计架构规范.md 3.2节 DialogCoordinator
 
 注意: 对话框类通过依赖注入传入，避免 Service 层直接导入 UI 层组件。
 """

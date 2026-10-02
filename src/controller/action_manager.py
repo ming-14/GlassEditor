@@ -3,7 +3,7 @@
 注册全局动作、维护快捷键映射，并作为所有菜单/工具栏/快捷键槽函数的宿主。
 每个槽函数均以 try-except 包裹，异常仅记录日志，不中断主流程。
 
-设计依据: docs/架构设计.md 2.3节 ActionManager
+设计依据: docs/开发规范/设计架构规范.md 3.3节 ActionManager
 """
 
 import os

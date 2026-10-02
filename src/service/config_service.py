@@ -1,7 +1,7 @@
 """
 配置服务模块 —— 用户配置读写、会话管理
 
-设计依据: docs/架构设计.md 2.3节 ConfigService
+设计依据: docs/开发规范/设计架构规范.md 3.2节 ConfigService
 
 使用 pydantic-settings 的 AppSettings 模型提供类型安全的配置定义与校验。
 底层仍依赖 Settings 进行 JSON 文件读写。
