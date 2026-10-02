@@ -24,6 +24,7 @@ from qfluentwidgets import (
 )
 
 from src.infrastructure.logger import get_logger
+from src.infrastructure.config_keys import ConfigKey
 from src.infrastructure.shortcut_registry import ShortcutRegistry
 from src.service.config_service import ConfigService
 
@@ -271,68 +272,82 @@ class SettingsPage(ScrollArea):
     def _load_current_settings(self) -> None:
         if self._config_service:
             self._original_settings = {
-                "font_family": self._config_service.get("font_family", ""),
-                "font_size": self._config_service.get("font_size", 13),
-                "theme": self._config_service.get("theme", "dark"),
-                "show_line_numbers": self._config_service.get("show_line_numbers", True),
-                "word_wrap": self._config_service.get("word_wrap", False),
-                "auto_indent": self._config_service.get("auto_indent", True),
-                "bracket_completion": self._config_service.get("bracket_completion", True),
-                "tab_width": self._config_service.get("tab_width", 4),
-                "reduce_animation": self._config_service.get("reduce_animation", False),
-                "close_to_tray": self._config_service.get("close_to_tray", False),
-                "start_minimized_to_tray": self._config_service.get("start_minimized_to_tray", False),
+                ConfigKey.FONT_FAMILY: self._config_service.get(ConfigKey.FONT_FAMILY, ""),
+                ConfigKey.FONT_SIZE: self._config_service.get(ConfigKey.FONT_SIZE, 13),
+                ConfigKey.THEME: self._config_service.get(ConfigKey.THEME, "dark"),
+                ConfigKey.SHOW_LINE_NUMBERS: self._config_service.get(
+                    ConfigKey.SHOW_LINE_NUMBERS, True
+                ),
+                ConfigKey.WORD_WRAP: self._config_service.get(ConfigKey.WORD_WRAP, False),
+                ConfigKey.AUTO_INDENT: self._config_service.get(ConfigKey.AUTO_INDENT, True),
+                ConfigKey.BRACKET_COMPLETION: self._config_service.get(
+                    ConfigKey.BRACKET_COMPLETION, True
+                ),
+                ConfigKey.TAB_WIDTH: self._config_service.get(ConfigKey.TAB_WIDTH, 4),
+                ConfigKey.REDUCE_ANIMATION: self._config_service.get(
+                    ConfigKey.REDUCE_ANIMATION, False
+                ),
+                ConfigKey.CLOSE_TO_TRAY: self._config_service.get(
+                    ConfigKey.CLOSE_TO_TRAY, False
+                ),
+                ConfigKey.START_MINIMIZED_TO_TRAY: self._config_service.get(
+                    ConfigKey.START_MINIMIZED_TO_TRAY, False
+                ),
             }
         else:
             self._original_settings = {
-                "font_family": "", "font_size": 13, "theme": "dark",
-                "show_line_numbers": True, "word_wrap": False,
-                "auto_indent": True, "bracket_completion": True,
-                "tab_width": 4, "reduce_animation": False,
-                "close_to_tray": False, "start_minimized_to_tray": False,
+                ConfigKey.FONT_FAMILY: "", ConfigKey.FONT_SIZE: 13,
+                ConfigKey.THEME: "dark",
+                ConfigKey.SHOW_LINE_NUMBERS: True, ConfigKey.WORD_WRAP: False,
+                ConfigKey.AUTO_INDENT: True, ConfigKey.BRACKET_COMPLETION: True,
+                ConfigKey.TAB_WIDTH: 4, ConfigKey.REDUCE_ANIMATION: False,
+                ConfigKey.CLOSE_TO_TRAY: False,
+                ConfigKey.START_MINIMIZED_TO_TRAY: False,
             }
         self._current_settings = dict(self._original_settings)
 
     def _collect_settings(self) -> Dict[str, Any]:
         return {
-            "font_family": self._font_card.comboBox.currentText(),
-            "font_size": self._font_size_card.spinBox.value(),
-            "theme": self._theme_card.comboBox.currentData() or "dark",
-            "tab_width": self._tab_width_card.spinBox.value(),
-            "show_line_numbers": self._line_numbers_card.isChecked(),
-            "word_wrap": self._word_wrap_card.isChecked(),
-            "auto_indent": self._auto_indent_card.isChecked(),
-            "bracket_completion": self._bracket_card.isChecked(),
-            "reduce_animation": self._reduce_anim_card.isChecked(),
-            "close_to_tray": self._close_to_tray_card.isChecked(),
-            "start_minimized_to_tray": self._start_minimized_card.isChecked(),
+            ConfigKey.FONT_FAMILY: self._font_card.comboBox.currentText(),
+            ConfigKey.FONT_SIZE: self._font_size_card.spinBox.value(),
+            ConfigKey.THEME: self._theme_card.comboBox.currentData() or "dark",
+            ConfigKey.TAB_WIDTH: self._tab_width_card.spinBox.value(),
+            ConfigKey.SHOW_LINE_NUMBERS: self._line_numbers_card.isChecked(),
+            ConfigKey.WORD_WRAP: self._word_wrap_card.isChecked(),
+            ConfigKey.AUTO_INDENT: self._auto_indent_card.isChecked(),
+            ConfigKey.BRACKET_COMPLETION: self._bracket_card.isChecked(),
+            ConfigKey.REDUCE_ANIMATION: self._reduce_anim_card.isChecked(),
+            ConfigKey.CLOSE_TO_TRAY: self._close_to_tray_card.isChecked(),
+            ConfigKey.START_MINIMIZED_TO_TRAY: self._start_minimized_card.isChecked(),
         }
 
     def _apply_settings_to_ui(self) -> None:
         s = self._current_settings
 
-        family = s.get("font_family", "")
+        family = s.get(ConfigKey.FONT_FAMILY, "")
         if family:
             idx = self._font_card.comboBox.findText(family)
             if idx >= 0:
                 self._font_card.comboBox.setCurrentIndex(idx)
 
-        self._font_size_card.spinBox.setValue(s.get("font_size", 13))
+        self._font_size_card.spinBox.setValue(s.get(ConfigKey.FONT_SIZE, 13))
 
-        theme_value = s.get("theme", "dark")
+        theme_value = s.get(ConfigKey.THEME, "dark")
         idx = self._theme_card.comboBox.findData(theme_value)
         if idx >= 0:
             self._theme_card.comboBox.setCurrentIndex(idx)
 
-        self._tab_width_card.spinBox.setValue(s.get("tab_width", 4))
+        self._tab_width_card.spinBox.setValue(s.get(ConfigKey.TAB_WIDTH, 4))
 
-        self._line_numbers_card.setChecked(s.get("show_line_numbers", True))
-        self._word_wrap_card.setChecked(s.get("word_wrap", False))
-        self._auto_indent_card.setChecked(s.get("auto_indent", True))
-        self._bracket_card.setChecked(s.get("bracket_completion", True))
-        self._reduce_anim_card.setChecked(s.get("reduce_animation", False))
-        self._close_to_tray_card.setChecked(s.get("close_to_tray", False))
-        self._start_minimized_card.setChecked(s.get("start_minimized_to_tray", False))
+        self._line_numbers_card.setChecked(s.get(ConfigKey.SHOW_LINE_NUMBERS, True))
+        self._word_wrap_card.setChecked(s.get(ConfigKey.WORD_WRAP, False))
+        self._auto_indent_card.setChecked(s.get(ConfigKey.AUTO_INDENT, True))
+        self._bracket_card.setChecked(s.get(ConfigKey.BRACKET_COMPLETION, True))
+        self._reduce_anim_card.setChecked(s.get(ConfigKey.REDUCE_ANIMATION, False))
+        self._close_to_tray_card.setChecked(s.get(ConfigKey.CLOSE_TO_TRAY, False))
+        self._start_minimized_card.setChecked(
+            s.get(ConfigKey.START_MINIMIZED_TO_TRAY, False)
+        )
 
     # ------------------------------------------------------------------
     # Auto-save
