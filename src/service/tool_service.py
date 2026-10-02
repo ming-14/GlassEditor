@@ -66,6 +66,22 @@ class ToolService:
         }
 
     @staticmethod
+    def _create_hasher(algorithm: str):
+        """! 创建指定算法的哈希对象
+
+        @param algorithm 哈希算法名（不区分大小写）
+        @return hashlib 哈希对象；算法不支持时返回 None
+        """
+        algorithm = algorithm.lower()
+        if algorithm == "md5":
+            return hashlib.md5()
+        elif algorithm == "sha1":
+            return hashlib.sha1()
+        elif algorithm == "sha256":
+            return hashlib.sha256()
+        return None
+
+    @staticmethod
     def compute_hash(text: str, algorithm: str = "md5") -> str:
         """
         计算文本的哈希值
@@ -74,18 +90,41 @@ class ToolService:
         @param algorithm: 哈希算法，支持 'md5', 'sha1', 'sha256'
         @return: 十六进制哈希字符串，算法不支持时返回空字符串
         """
-        algorithm = algorithm.lower()
-        if algorithm == "md5":
-            h = hashlib.md5()
-        elif algorithm == "sha1":
-            h = hashlib.sha1()
-        elif algorithm == "sha256":
-            h = hashlib.sha256()
-        else:
+        hash_obj = ToolService._create_hasher(algorithm)
+        if hash_obj is None:
             return ""
 
-        h.update(text.encode("utf-8"))
-        return h.hexdigest()
+        hash_obj.update(text.encode("utf-8"))
+        return hash_obj.hexdigest()
+
+    @staticmethod
+    def compute_file_hash(
+        file_path: str,
+        algorithm: str = "md5",
+        chunk_size: int = 64 * 1024,
+    ) -> str:
+        """
+        计算文件的哈希值（分块读取，大文件不会整体载入内存）
+
+        阻塞式实现，调用方如需避免阻塞 UI 应放入工作线程执行。
+
+        @param file_path: 目标文件路径
+        @param algorithm: 哈希算法，支持 'md5', 'sha1', 'sha256'
+        @param chunk_size: 分块读取大小（字节）
+        @return: 十六进制哈希字符串，算法不支持时返回空字符串
+        @raise OSError: 文件不存在或无法读取，由调用方捕获处理
+        """
+        hash_obj = ToolService._create_hasher(algorithm)
+        if hash_obj is None:
+            return ""
+
+        with open(file_path, "rb") as f:
+            while True:
+                chunk = f.read(chunk_size)
+                if not chunk:
+                    break
+                hash_obj.update(chunk)
+        return hash_obj.hexdigest()
 
     @staticmethod
     def sort_lines(

@@ -5,30 +5,70 @@
 没有文本输入框，自动根据编辑器上下文计算哈希，支持选中文本/整个文件/整个文本切换。
 文件保存由对话框的"计算"按钮触发，若文件有待保存修改则按钮显示"保存文件并计算"。
 """
-import hashlib
 import os
 from typing import Callable, Optional
 
 from PyQt5.QtWidgets import (
     QHBoxLayout, QWidget, QApplication,
 )
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import Qt, QObject, QRunnable, QThreadPool, pyqtSignal
 
 from qfluentwidgets import (
     MessageBoxBase, LineEdit, ComboBox,
     PrimaryPushButton, PushButton, BodyLabel,
 )
 from src.infrastructure.logger import get_logger
+from src.service.tool_service import ToolService
 
 _logger = get_logger("HashDialog")
-
-# 读块大小：64 KB
-_CHUNK_SIZE = 64 * 1024
 
 # 哈希范围选项
 _SCOPE_SELECTED = "选中文本"
 _SCOPE_FILE = "整个文件"
 _SCOPE_TEXT = "整个文本"
+
+
+class _HashWorkerSignals(QObject):
+    """! 哈希工作线程的结果回传信号
+
+    在主线程创建、由工作线程发射，接收方（HashDialog）位于主线程，
+    跨线程连接显式使用 Qt.QueuedConnection（规范 §6）。
+    不设置 parent，生命周期由 HashDialog 与 _HashWorker 共同持有，
+    即使对话框提前销毁也不会出现悬垂发射。
+    """
+    finished = pyqtSignal(str, str)  # (算法显示名, 哈希值)
+    failed = pyqtSignal(str)         # (错误信息)
+
+
+class _HashWorker(QRunnable):
+    """! 文件哈希计算任务
+
+    通过 QThreadPool 在工作线程中分块读取文件并计算哈希，
+    避免大文件计算阻塞 UI 线程（规范 §6 并发模型）。
+    """
+
+    def __init__(self, signals: _HashWorkerSignals, algo_name: str,
+                 file_path: str, algorithm: str):
+        """! 构造函数
+
+        @param signals  结果回传信号对象（由对话框持有引用）
+        @param algo_name 算法显示名，如 "MD5"
+        @param file_path 目标文件路径
+        @param algorithm 算法标识，如 "md5"
+        """
+        super().__init__()
+        self._signals = signals
+        self._algo_name = algo_name
+        self._file_path = file_path
+        self._algorithm = algorithm
+
+    def run(self) -> None:
+        """! 工作线程入口：执行计算并回传结果"""
+        try:
+            result = ToolService.compute_file_hash(self._file_path, self._algorithm)
+            self._signals.finished.emit(self._algo_name, result)
+        except Exception as e:
+            self._signals.failed.emit(str(e))
 
 
 class HashDialog(MessageBoxBase):
@@ -45,9 +85,9 @@ class HashDialog(MessageBoxBase):
     hash_computed = pyqtSignal(str, str)
 
     _ALGORITHMS = {
-        "MD5": hashlib.md5,
-        "SHA1": hashlib.sha1,
-        "SHA256": hashlib.sha256,
+        "MD5": "md5",
+        "SHA1": "sha1",
+        "SHA256": "sha256",
     }
 
     def __init__(
@@ -66,6 +106,15 @@ class HashDialog(MessageBoxBase):
         self._full_text = full_text
         self._needs_file_save = needs_file_save
         self._save_callback = save_callback
+        self._running = False
+        # 工作线程回传信号：不设 parent，由对话框与任务共同持有
+        self._worker_signals = _HashWorkerSignals()
+        self._worker_signals.finished.connect(
+            self._on_hash_finished, Qt.QueuedConnection
+        )
+        self._worker_signals.failed.connect(
+            self._on_hash_failed, Qt.QueuedConnection
+        )
         self.setWindowTitle("哈希计算器")
         self.setAccessibleName("哈希计算器")
 
@@ -215,6 +264,10 @@ class HashDialog(MessageBoxBase):
 
     def _compute(self) -> None:
         """根据当前哈希范围执行计算，计算前先清空旧结果"""
+        if self._running:
+            # 上一次文件哈希尚未完成，忽略重复请求
+            self._result_input.setPlaceholderText("计算中...")
+            return
         self._result_input.clear()
         scope = self._get_current_scope()
         if scope == _SCOPE_SELECTED:
@@ -233,40 +286,49 @@ class HashDialog(MessageBoxBase):
             self._result_input.setText("无可用数据")
 
     def _compute_file_hash(self) -> None:
-        """计算文件的哈希值（分块读取）"""
+        """计算文件哈希：提交到线程池异步执行，避免阻塞 UI 线程"""
         algo_name = self._algo_combo.currentText()
-        algo_func = self._ALGORITHMS.get(algo_name)
-        if algo_func is None:
+        algorithm = self._ALGORITHMS.get(algo_name)
+        if algorithm is None:
             return
 
-        try:
-            hash_obj = algo_func()
-            with open(self._file_path, "rb") as f:
-                while True:
-                    chunk = f.read(_CHUNK_SIZE)
-                    if not chunk:
-                        break
-                    hash_obj.update(chunk)
-            result = hash_obj.hexdigest()
-            self._result_input.setText(result)
-            self.hash_computed.emit(algo_name, result)
-        except Exception as e:
-            self._logger.error(f"文件哈希计算失败: {e}")
-            self._result_input.setText(f"计算失败: {e}")
+        self._running = True
+        self._compute_btn.setEnabled(False)
+        self._result_input.setPlaceholderText("计算中...")
+        worker = _HashWorker(
+            self._worker_signals, algo_name, self._file_path, algorithm
+        )
+        QThreadPool.globalInstance().start(worker)
 
     def _compute_text_hash(self, text: str) -> None:
-        """计算文本的哈希值"""
+        """计算文本的哈希值（内存操作，同步执行）"""
         if not text:
             return
         algo_name = self._algo_combo.currentText()
-        algo_func = self._ALGORITHMS.get(algo_name)
-        if algo_func is None:
+        algorithm = self._ALGORITHMS.get(algo_name)
+        if algorithm is None:
             return
 
-        hash_obj = algo_func(text.encode("utf-8"))
-        result = hash_obj.hexdigest()
+        result = ToolService.compute_hash(text, algorithm)
+        if not result:
+            self._result_input.setText(f"不支持的算法: {algo_name}")
+            return
         self._result_input.setText(result)
         self.hash_computed.emit(algo_name, result)
+
+    def _on_hash_finished(self, algo_name: str, result: str) -> None:
+        """! 工作线程计算完成槽（QueuedConnection 回到主线程）"""
+        self._running = False
+        self._compute_btn.setEnabled(True)
+        self._result_input.setText(result)
+        self.hash_computed.emit(algo_name, result)
+
+    def _on_hash_failed(self, error: str) -> None:
+        """! 工作线程计算失败槽（QueuedConnection 回到主线程）"""
+        self._running = False
+        self._compute_btn.setEnabled(True)
+        self._logger.error(f"文件哈希计算失败: {error}")
+        self._result_input.setText(f"计算失败: {error}")
 
     def _on_copy(self) -> None:
         """将计算结果复制到剪贴板"""
