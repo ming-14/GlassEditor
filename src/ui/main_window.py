@@ -97,7 +97,6 @@ class MainWindow(FluentWindow):
         set_syntax_colors_provider(self._get_syntax_colors_from_theme_service)
 
         self._file_service = FileService(signal_bus=self._signal_bus, parent=self)
-        self._tool_service = ToolService()
         self._search_service = SearchService()
         self._highlighter_manager = SyntaxHighlighterManager(
             config_service=self._config_service,
