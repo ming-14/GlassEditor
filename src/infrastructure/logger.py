@@ -10,6 +10,8 @@
 import os
 import re
 import sys
+import threading
+import traceback
 from pathlib import Path
 from typing import Dict, Optional
 
@@ -345,3 +347,80 @@ def stop_logger() -> None:
         return
     logger.remove()
     _started = False
+
+
+# ============================================================================
+# 全局未处理异常钩子
+# ============================================================================
+
+## @brief 异常钩子是否已安装，避免重复安装
+_exception_hook_installed: bool = False
+
+
+def _log_unhandled_exception(exc_type, exc_value, exc_tb, source: str) -> None:
+    """!@brief 将未处理异常记录为 CRITICAL 并同步刷盘
+
+    PyQt5 在槽函数抛出未捕获异常时，若未安装自定义 excepthook，
+    会调用 qFatal() 触发 abort()，进程以 0xC0000409 退出，
+    异常信息只写到 stderr（GUI 启动方式下通常看不到），
+    日志文件中不留任何痕迹，导致崩溃"无任何日志"、极难排查。
+
+    注意: 文件 handler 使用 enqueue=True 异步写入，而 abort() 不会执行
+    atexit 刷新流程，因此必须调用 logger.complete() 同步等待队列落盘，
+    否则这条崩溃日志会随进程一起丢失。
+
+    @param exc_type  异常类型
+    @param exc_value 异常实例
+    @param exc_tb    异常回溯对象
+    @param source    异常来源描述（"main" 或 "thread:线程名"）
+    """
+    # Ctrl+C 属于用户主动中断，交回默认处理，不记录
+    if issubclass(exc_type, KeyboardInterrupt):
+        sys.__excepthook__(exc_type, exc_value, exc_tb)
+        return
+
+    try:
+        detail = "".join(traceback.format_exception(exc_type, exc_value, exc_tb))
+        get_logger("Unhandled").critical(f"未处理异常[{source}]: {detail}")
+        # 同步等待异步队列写入完成，防止崩溃丢失日志
+        logger.complete()
+    except Exception:  # noqa: BLE001 - 钩子自身绝不能再次抛异常
+        try:
+            sys.__excepthook__(exc_type, exc_value, exc_tb)
+        except Exception:  # noqa: BLE001
+            pass
+
+
+def install_exception_hook() -> None:
+    """!@brief 安装全局未处理异常钩子（主线程 + 子线程）
+
+    应在 start_logger() 之后调用一次，重复调用无副作用。
+
+    安装自定义 sys.excepthook 后，PyQt5 会把槽函数中未捕获的异常
+    交给该钩子处理，而不再调用 qFatal() 直接 abort，
+    因此既能留下崩溃日志，也能避免整个进程被强杀。
+    """
+    global _exception_hook_installed
+    if _exception_hook_installed:
+        return
+
+    def _main_hook(exc_type, exc_value, exc_tb):
+        """!@brief 主线程未处理异常钩子"""
+        _log_unhandled_exception(exc_type, exc_value, exc_tb, "main")
+
+    sys.excepthook = _main_hook
+
+    # threading.excepthook 仅 Python 3.8+ 提供
+    if hasattr(threading, "excepthook"):
+        def _thread_hook(args):
+            """!@brief 子线程未处理异常钩子"""
+            _log_unhandled_exception(
+                args.exc_type,
+                args.exc_value,
+                args.exc_traceback,
+                f"thread:{getattr(args.thread, 'name', 'unknown')}",
+            )
+
+        threading.excepthook = _thread_hook
+
+    _exception_hook_installed = True

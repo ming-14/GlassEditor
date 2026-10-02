@@ -134,7 +134,12 @@ def _launch_main_window(args: ParsedArgs):
     from PyQt5.QtCore import qInstallMessageHandler, QtMsgType, QTimer
     from PyQt5.QtWidgets import QApplication
     from qfluentwidgets import setTheme, Theme
-    from src.infrastructure.logger import start_logger, stop_logger, get_logger
+    from src.infrastructure.logger import (
+        start_logger,
+        stop_logger,
+        get_logger,
+        install_exception_hook,
+    )
 
     app = QApplication(sys.argv)
     app.setApplicationName("GlassEditor")
@@ -151,6 +156,7 @@ def _launch_main_window(args: ParsedArgs):
     setTheme(Theme.DARK)
 
     start_logger()
+    install_exception_hook()
     logger = get_logger("Main")
     logger.info("GlassEditor starting...")
     logger.info(f"CLI args: files={args.files}, line={args.line}, "

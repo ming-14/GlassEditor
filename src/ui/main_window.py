@@ -1610,8 +1610,20 @@ class MainWindow(FluentWindow):
         else:
             self._search_bar.focus_input()
 
-    @pyqtSlot()
+    @pyqtSlot(dict)
     def _on_settings_page_changed(self, settings: dict) -> None:
+        """! @brief 设置页配置变更槽
+
+        由 SettingsPage.settings_changed(dict) 信号触发。
+        设置内容已由 SettingsPage 自行持久化到配置文件，
+        此处只刷新依赖配置的运行时状态（如快捷键注册表）。
+
+        注意: 装饰器签名必须与信号签名一致（pyqtSignal(dict) -> @pyqtSlot(dict)），
+        否则 PyQt5 会按装饰器声明的零参签名调用，抛出
+        "missing 1 required positional argument" 并触发 qFatal -> abort。
+
+        @param settings 变更后的完整设置字典
+        """
         self._action_manager._apply_shortcuts_from_registry()
 
     def _on_config_updated(self) -> None:
