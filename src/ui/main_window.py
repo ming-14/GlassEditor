@@ -25,6 +25,7 @@ from qfluentwidgets import (
 
 from src.infrastructure.logger import get_logger
 from src.infrastructure.config_keys import ConfigKey
+from src.infrastructure.encoding_utils import get_display_name, get_status_bar_encoding
 
 from src.ui.editor_tab_widget import EditorTabWidget
 from src.ui.code_editor import CodeEditor, set_colors_provider
@@ -1092,7 +1093,6 @@ class MainWindow(FluentWindow):
 
         file_path = meta.get("file_path")
         if file_path:
-            from src.infrastructure.encoding_utils import get_status_bar_encoding
             enc_internal = meta.get("encoding", "utf-8")
             self._status_bar_widget.set_encoding(
                 get_status_bar_encoding(enc_internal)
@@ -1275,7 +1275,6 @@ class MainWindow(FluentWindow):
 
         @param theme_name 当前主题名称
         """
-        from src.service.theme_service import ThemeService
         if theme_name == ThemeService.THEME_HIGH_CONTRAST:
             if not getattr(self, '_high_contrast_qss_applied', False):
                 current = self.styleSheet()
@@ -1808,8 +1807,6 @@ class MainWindow(FluentWindow):
         @param file_path 文件路径
         @param new_encoding 新编码的内部名称
         """
-        from src.infrastructure.encoding_utils import get_status_bar_encoding
-
         current_path = self._tab_manager.get_current_file_path()
         if current_path == file_path:
             display = get_status_bar_encoding(new_encoding)
@@ -1822,8 +1819,6 @@ class MainWindow(FluentWindow):
 
         @param encoding 目标编码的内部名称
         """
-        from src.infrastructure.encoding_utils import get_display_name, get_status_bar_encoding
-
         self._logger.info(f"编码转换请求: {encoding}")
         index = self._tab_manager.get_current_index()
         if index < 0:
@@ -1957,7 +1952,6 @@ class MainWindow(FluentWindow):
 
         @param mode 转换模式（upper/lower/title/swap）
         """
-        from src.service.tool_service import ToolService
         editor = self._tab_widget.current_editor()
         if editor:
             cursor = editor.textCursor()
@@ -1971,7 +1965,6 @@ class MainWindow(FluentWindow):
 
         对选中文本进行排序并去重，未选中文本时提示用户。
         """
-        from src.service.tool_service import ToolService
         editor = self._tab_widget.current_editor()
         if editor:
             cursor = editor.textCursor()

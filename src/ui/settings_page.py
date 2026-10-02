@@ -1,3 +1,12 @@
+"""! @brief 设置界面模块
+
+以 ScrollArea 形式内嵌于 MainWindow 的 Fluent 导航接口，
+分组展示编辑器/外观/托盘等配置卡片，变更即时持久化到 ConfigService，
+并通过 settings_changed / theme_change_requested 信号通知外部刷新运行时状态。
+
+设计依据: docs/功能设计.md 设置页章节
+"""
+
 from typing import Any, Dict, Optional
 
 from PyQt5.QtCore import Qt, pyqtSignal

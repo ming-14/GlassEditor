@@ -1,3 +1,11 @@
+"""! @brief 动作管理模块
+
+注册全局动作、维护快捷键映射，并作为所有菜单/工具栏/快捷键槽函数的宿主。
+每个槽函数均以 try-except 包裹，异常仅记录日志，不中断主流程。
+
+设计依据: docs/架构设计.md 2.3节 ActionManager
+"""
+
 import os
 from typing import Dict, List, Optional, TYPE_CHECKING
 

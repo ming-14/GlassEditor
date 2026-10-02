@@ -10,6 +10,7 @@ import threading
 from pathlib import Path
 from typing import Any, Dict, Optional
 
+from src.infrastructure.logger import get_logger
 from src.infrastructure.singleton import Singleton
 
 
@@ -68,7 +69,6 @@ class Settings(metaclass=Singleton):
                 self._cache[filename] = data
                 return data
             except (json.JSONDecodeError, OSError) as e:
-                from src.infrastructure.logger import get_logger
                 get_logger("Settings").warning(
                     f"Failed to read config file: {file_path}",
                     error=str(e),
@@ -94,7 +94,6 @@ class Settings(metaclass=Singleton):
                 self._cache[filename] = data
                 return True
             except OSError as e:
-                from src.infrastructure.logger import get_logger
                 get_logger("Settings").error(
                     f"Failed to write config file: {file_path}",
                     error=str(e),

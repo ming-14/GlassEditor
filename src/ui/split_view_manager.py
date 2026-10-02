@@ -10,6 +10,7 @@ from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import QSplitter
 
 from src.infrastructure.logger import get_logger
+from src.ui.code_editor import CodeEditor
 
 from typing import Callable, Optional, TYPE_CHECKING
 if TYPE_CHECKING:
@@ -17,7 +18,6 @@ if TYPE_CHECKING:
     from src.controller.signal_bus import SignalBus
     from src.controller.focus_manager import FocusManager
     from src.ui.editor_tab_widget import EditorTabWidget
-    from src.ui.code_editor import CodeEditor
 
 
 class SplitViewManager:
@@ -113,8 +113,6 @@ class SplitViewManager:
 
         @param orientation 分割方向
         """
-        from src.ui.code_editor import CodeEditor
-
         editor = self._tab_manager.get_current_editor()
         if editor is None:
             self._signal_bus.status_message.emit("无编辑器可用于分屏", 3000)

@@ -17,6 +17,11 @@ from qfluentwidgets import (
 )
 
 from src.infrastructure.logger import get_logger
+from src.infrastructure.encoding_utils import (
+    get_all_available_encodings,
+    get_display_name,
+    get_status_bar_encoding,
+)
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -622,12 +627,6 @@ class MenuBarManager(QObject):
 
         @param menu 目标RoundMenu
         """
-        from src.infrastructure.encoding_utils import (
-            get_all_available_encodings,
-            get_display_name,
-            get_status_bar_encoding,
-        )
-
         available_groups = get_all_available_encodings()
         current_index = self._tab_manager.get_current_index()
         current_internal = "utf-8"
