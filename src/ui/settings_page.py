@@ -13,19 +13,17 @@ from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QFontDatabase
 from PyQt5.QtWidgets import (
     QVBoxLayout, QWidget,
-    QTableWidgetItem,
 )
 
 from qfluentwidgets import (
     SpinBox, ComboBox,
     ScrollArea, StrongBodyLabel,
-    TableWidget, FluentIcon,
+    FluentIcon,
     SettingCard, SwitchSettingCard, SettingCardGroup,
 )
 
 from src.infrastructure.logger import get_logger
 from src.infrastructure.config_keys import ConfigKey
-from src.infrastructure.shortcut_registry import ShortcutRegistry
 from src.service.config_service import ConfigService
 
 _logger = get_logger("SettingsPage")
@@ -84,12 +82,10 @@ class SettingsPage(ScrollArea):
         self,
         parent: Optional[QWidget] = None,
         config_service: Optional[ConfigService] = None,
-        shortcut_registry: Optional[ShortcutRegistry] = None,
     ):
         super().__init__(parent)
         self.setObjectName("settingsPage")
         self._config_service = config_service
-        self._shortcut_registry = shortcut_registry or ShortcutRegistry()
 
         self._original_settings: Dict[str, Any] = {}
         self._current_settings: Dict[str, Any] = {}
@@ -118,15 +114,12 @@ class SettingsPage(ScrollArea):
         self._appearance_group = self._create_appearance_group()
         self._editor_group = self._create_editor_group()
         self._tray_group = self._create_tray_group()
-        self._shortcut_group = self._create_shortcut_group(content)
 
         outer.addWidget(self._appearance_group)
         outer.addSpacing(16)
         outer.addWidget(self._editor_group)
         outer.addSpacing(16)
         outer.addWidget(self._tray_group)
-        outer.addSpacing(16)
-        outer.addWidget(self._shortcut_group)
         outer.addStretch()
 
         self.setWidget(content)
@@ -211,48 +204,6 @@ class SettingsPage(ScrollArea):
         group.addSettingCard(self._start_minimized_card)
 
         return group
-
-    def _create_shortcut_group(self, parent=None) -> SettingCardGroup:
-        group = SettingCardGroup("快捷键", parent)
-
-        self._shortcut_table = TableWidget(group)
-        self._shortcut_table.setColumnCount(3)
-        self._shortcut_table.setHorizontalHeaderLabels(["操作", "快捷键", "默认值"])
-        self._shortcut_table.horizontalHeader().setSectionResizeMode(
-            0, self._shortcut_table.horizontalHeader().Stretch
-        )
-        self._shortcut_table.horizontalHeader().setSectionResizeMode(
-            1, self._shortcut_table.horizontalHeader().Fixed
-        )
-        self._shortcut_table.horizontalHeader().setSectionResizeMode(
-            2, self._shortcut_table.horizontalHeader().Fixed
-        )
-        self._shortcut_table.setColumnWidth(1, 160)
-        self._shortcut_table.setColumnWidth(2, 120)
-        self._shortcut_table.setSelectionBehavior(self._shortcut_table.SelectRows)
-        self._shortcut_table.setEditTriggers(self._shortcut_table.NoEditTriggers)
-        self._shortcut_table.setMinimumHeight(200)
-        self._populate_shortcut_table()
-        group.addSettingCard(self._shortcut_table)
-
-        return group
-
-    def _populate_shortcut_table(self) -> None:
-        all_shortcuts = self._shortcut_registry.get_all()
-        action_names = sorted(all_shortcuts.keys())
-        self._shortcut_table.setRowCount(len(action_names))
-        for row, name in enumerate(action_names):
-            name_item = QTableWidgetItem(name)
-            name_item.setFlags(name_item.flags() & ~Qt.ItemIsEditable)
-            self._shortcut_table.setItem(row, 0, name_item)
-            current_val = all_shortcuts.get(name, "")
-            shortcut_item = QTableWidgetItem(current_val if current_val else "无")
-            shortcut_item.setFlags(shortcut_item.flags() & ~Qt.ItemIsEditable)
-            self._shortcut_table.setItem(row, 1, shortcut_item)
-            default_val = self._shortcut_registry.get_default(name) or ""
-            default_item = QTableWidgetItem(default_val if default_val else "无")
-            default_item.setFlags(default_item.flags() & ~Qt.ItemIsEditable)
-            self._shortcut_table.setItem(row, 2, default_item)
 
     # ------------------------------------------------------------------
     # showEvent — refresh on navigate

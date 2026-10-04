@@ -119,7 +119,6 @@ class MainWindow(FluentWindow):
 
         self._settings_interface = SettingsPage(
             config_service=self._config_service,
-            shortcut_registry=self._action_manager._shortcut_registry,
         )
         self.addSubInterface(
             self._settings_interface,
