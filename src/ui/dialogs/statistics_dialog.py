@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import (
 )
 
 from qfluentwidgets import (
-    BodyLabel, MessageBoxBase, SettingCardGroup,
+    BodyLabel, MessageBoxBase, TitleLabel,
 )
 from src.infrastructure.logger import get_logger
 
@@ -53,61 +53,48 @@ class StatisticsDialog(MessageBoxBase):
             stats: 统计数据字典
         """
 
-        # 统计信息分组
-        stats_group = SettingCardGroup("文档统计", self)
-        stats_group.setAccessibleName("文档统计")
+        # 固定对话框最小宽度，避免统计行被压缩（MaskDialogBase 按内容 hint 布局）
+        self.widget.setMinimumWidth(360)
 
-        # 字符数（含空格）
-        chars_with_widget = QWidget()
-        chars_with_layout = QHBoxLayout(chars_with_widget)
-        chars_with_layout.setContentsMargins(20, 8, 20, 8)
-        chars_with_label = BodyLabel("字符数（含空格）：")
-        self._chars_with_value = BodyLabel(str(stats["chars_with_spaces"]))
-        self._chars_with_value.setStyleSheet("font-weight: bold;")
-        chars_with_layout.addWidget(chars_with_label)
-        chars_with_layout.addStretch()
-        chars_with_layout.addWidget(self._chars_with_value)
-        stats_group.addSettingCard(chars_with_widget)
+        # 标题
+        title_label = TitleLabel("文档统计")
+        title_label.setAccessibleName("文档统计")
+        self.viewLayout.addWidget(title_label)
+        self.viewLayout.addSpacing(4)
 
-        # 字符数（不含空格）
-        chars_without_widget = QWidget()
-        chars_without_layout = QHBoxLayout(chars_without_widget)
-        chars_without_layout.setContentsMargins(20, 8, 20, 8)
-        chars_without_label = BodyLabel("字符数（不含空格）：")
-        self._chars_without_value = BodyLabel(str(stats["chars_without_spaces"]))
-        self._chars_without_value.setStyleSheet("font-weight: bold;")
-        chars_without_layout.addWidget(chars_without_label)
-        chars_without_layout.addStretch()
-        chars_without_layout.addWidget(self._chars_without_value)
-        stats_group.addSettingCard(chars_without_widget)
+        # 统计行：标签左对齐、数值右对齐加粗
+        self._chars_with_value = self._add_stat_row(
+            "字符数（含空格）：", stats["chars_with_spaces"]
+        )
+        self._chars_without_value = self._add_stat_row(
+            "字符数（不含空格）：", stats["chars_without_spaces"]
+        )
+        self._words_value = self._add_stat_row("词数：", stats["words"])
+        self._lines_value = self._add_stat_row("行数：", stats["lines"])
 
-        # 词数
-        words_widget = QWidget()
-        words_layout = QHBoxLayout(words_widget)
-        words_layout.setContentsMargins(20, 8, 20, 8)
-        words_label = BodyLabel("词数：")
-        self._words_value = BodyLabel(str(stats["words"]))
-        self._words_value.setStyleSheet("font-weight: bold;")
-        words_layout.addWidget(words_label)
-        words_layout.addStretch()
-        words_layout.addWidget(self._words_value)
-        stats_group.addSettingCard(words_widget)
-
-        # 行数
-        lines_widget = QWidget()
-        lines_layout = QHBoxLayout(lines_widget)
-        lines_layout.setContentsMargins(20, 8, 20, 8)
-        lines_label = BodyLabel("行数：")
-        self._lines_value = BodyLabel(str(stats["lines"]))
-        self._lines_value.setStyleSheet("font-weight: bold;")
-        lines_layout.addWidget(lines_label)
-        lines_layout.addStretch()
-        lines_layout.addWidget(self._lines_value)
-        stats_group.addSettingCard(lines_widget)
-
-        # 将统计分组添加到 MessageBoxBase 的内容区域
-        self.viewLayout.addWidget(stats_group)
+        self.viewLayout.addStretch()
 
         # 配置底部按钮
         self.yesButton.setText("关闭")
         self.cancelButton.hide()
+
+    def _add_stat_row(self, label_text: str, value: int) -> BodyLabel:
+        """! 添加一行统计信息（标签左对齐、数值右对齐）
+
+        Args:
+            label_text: 统计项名称
+            value: 统计数值
+
+        Returns:
+            数值标签，供调用方保留引用
+        """
+        row = QHBoxLayout()
+        row.addWidget(BodyLabel(label_text))
+        row.addStretch()
+
+        value_label = BodyLabel(str(value))
+        value_label.setStyleSheet("font-weight: bold;")
+        row.addWidget(value_label)
+
+        self.viewLayout.addLayout(row)
+        return value_label
