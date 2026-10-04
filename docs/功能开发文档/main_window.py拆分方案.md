@@ -38,22 +38,7 @@
 **依赖注入**：`action_manager, tab_manager, file_service, theme_service, config_service, signal_bus, status_bar_widget`
 **信号**：菜单按钮需发射信号让 MainWindow 处理（如 `open_recent_file(str)`）
 
-#### 3. `search_result_panel.py`（新建，~280 行）
-
-**提取内容**：
-- `_create_search_result_panel()` → `SearchResultPanel(QWidget)` 类
-- `_show_search_result_panel()` → 实例方法
-- `_hide_search_result_panel()` → 实例方法
-- `_perform_multi_file_search()` → SearchResultPanel 方法
-- `_on_search_result_double_clicked()` → SearchResultPanel 方法
-- `_find_in_files()` → SearchResultPanel 方法（或保留公共入口）
-- `_on_search_panel_search()` → SearchResultPanel 方法
-- 所有相关成员变量（`_search_result_panel`, `_search_result_input`, `_search_result_btn`, `_search_result_status`, `_search_result_tree`）→ SearchResultPanel 属性
-
-**依赖注入**：`tab_manager, signal_bus, parent`
-**信号**：`navigate_to_match(tab_index, line_num, search_text)` → MainWindow 处理标签切换和光标定位
-
-#### 4. `split_view_manager.py`（新建，~100 行）
+#### 3. `split_view_manager.py`（新建，~100 行）
 
 **提取内容**：
 - `_toggle_split()` → `SplitViewManager` 方法
@@ -64,7 +49,7 @@
 
 **依赖注入**：`tab_manager, signal_bus, tab_widget, main_splitter, splitter`
 
-#### 5. `syntax_helper.py`（新建，~100 行）
+#### 4. `syntax_helper.py`（新建，~100 行）
 
 **提取内容**：
 - `_apply_language_to_tab()` 中与高亮器创建和主题应用的纯逻辑
@@ -98,8 +83,8 @@
 | 拖拽 | `dragEnterEvent`, `dropEvent`, `_open_dropped_file` |
 | 文件外部修改 | `_on_file_externally_modified`, `_reload_file` |
 | 全屏 | `toggle_fullscreen`, `changeEvent` |
-| 打印/导出PDF | `_on_print`, `_export_pdf` |
-| 公共接口方法 | `export_pdf`, `confirm_close_unsaved_tab`, 等 |
+| 打印 | `_on_print` |
+| 公共接口方法 | `confirm_close_unsaved_tab`, 等 |
 
 ---
 
@@ -109,7 +94,6 @@
 main_window.py
 ├── menu_manager.py          (构造器注入：action_mgr, tab_mgr, services, signal_bus)
 ├── welcome_page.py          (构造器注入：theme_service, action_manager)
-├── search_result_panel.py   (构造器注入：tab_manager, signal_bus)
 ├── split_view_manager.py    (构造器注入：tab_manager, signal_bus, tab_widget, splitter)
 └── syntax_helper.py         (模块级函数，无状态)
 ```
@@ -120,5 +104,4 @@ MainWindow 与子组件之间通过 **Qt 信号** 通信：
 - `welcome_page.theme_changed_requested` → `MainWindow._on_theme_change`
 - `menu_manager.open_recent_file_requested` → `MainWindow._on_open_recent_file`
 - `menu_manager.encoding_changed_requested` → `MainWindow._on_encoding_changed`
-- `search_result_panel.navigate_to_match` → `MainWindow._on_search_result_navigate`
 - `split_view_manager.status_message` → `MainWindow._on_status_message`
