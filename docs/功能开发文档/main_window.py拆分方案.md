@@ -1,6 +1,6 @@
 ## `main_window.py` 微架构拆分方案
 
-> **状态说明（2026-10-05）：** 本方案已实施。其中的 `SplitViewManager` 部分已作废——分屏功能（含 `FocusManager`）已于同日整体移除，MainWindow 现在直接持有单一水平分割器（左侧编辑器区 + 右侧查找结果面板）。下文关于分屏的描述仅作历史记录。
+> **状态说明（2026-10-05）：** 本方案已实施。其中两个模块后续随功能下线被移除，故下文不再保留其拆分描述：`split_view_manager.py`（分屏功能，含 `FocusManager`）与 `search_result_panel.py`（在文件中查找）。MainWindow 现已不持有分割器，`stackedWidget` 直接加入编辑器区布局。
 
 ### 核心思路
 
@@ -38,18 +38,7 @@
 **依赖注入**：`action_manager, tab_manager, file_service, theme_service, config_service, signal_bus, status_bar_widget`
 **信号**：菜单按钮需发射信号让 MainWindow 处理（如 `open_recent_file(str)`）
 
-#### 3. `split_view_manager.py`（新建，~100 行）
-
-**提取内容**：
-- `_toggle_split()` → `SplitViewManager` 方法
-- `_open_split_view()` → SplitViewManager 方法
-- `_close_split_view()` → SplitViewManager 方法
-- `_set_focus_side()` → SplitViewManager 方法
-- 分屏相关状态变量（`_split_active`, `_split_orientation`, `_split_editor`, `_focus_side`, `_panel_tab_index`, `_syncing_tab`）→ SplitViewManager 属性
-
-**依赖注入**：`tab_manager, signal_bus, tab_widget, main_splitter, splitter`
-
-#### 4. `syntax_helper.py`（新建，~100 行）
+#### 3. `syntax_helper.py`（新建，~100 行）
 
 **提取内容**：
 - `_apply_language_to_tab()` 中与高亮器创建和主题应用的纯逻辑
@@ -59,7 +48,7 @@
 
 ---
 
-### 保留在 MainWindow 中的内容（约 1500 行）
+### 保留在 MainWindow 中的内容（约 2070 行）
 
 | 模块 | 说明 |
 |------|------|
@@ -67,7 +56,7 @@
 | `closeEvent` + `_save_full_session` | 关闭生命周期 |
 | `_exec_tristate_dialog` | UI 工具方法 |
 | `init_ui` | 组合子组件（更新调用方式） |
-| `init_editor_interface` | EditorTabWidget 创建、splitter 布局、状态栏/搜索栏添加 |
+| `init_editor_interface` | EditorTabWidget 创建、stackedWidget 挂载、状态栏/搜索栏添加 |
 | `init_command_bar` | CommandBar 创建 |
 | `_populate_menus_and_toolbar` | 简化，委托 MenuManager |
 | `_add_command_bar_actions` | 保留 |
@@ -94,7 +83,6 @@
 main_window.py
 ├── menu_manager.py          (构造器注入：action_mgr, tab_mgr, services, signal_bus)
 ├── welcome_page.py          (构造器注入：theme_service, action_manager)
-├── split_view_manager.py    (构造器注入：tab_manager, signal_bus, tab_widget, splitter)
 └── syntax_helper.py         (模块级函数，无状态)
 ```
 
@@ -104,4 +92,3 @@ MainWindow 与子组件之间通过 **Qt 信号** 通信：
 - `welcome_page.theme_changed_requested` → `MainWindow._on_theme_change`
 - `menu_manager.open_recent_file_requested` → `MainWindow._on_open_recent_file`
 - `menu_manager.encoding_changed_requested` → `MainWindow._on_encoding_changed`
-- `split_view_manager.status_message` → `MainWindow._on_status_message`
