@@ -1,7 +1,7 @@
 """! @brief 琉璃编辑器主窗口模块
 
 主窗口作为编排器(Orchestrator)，组合已提取的子组件：
-WelcomePage、MenuBarManager、SearchResultPanel，
+WelcomePage、MenuBarManager，
 负责创建子组件实例、连接信号与槽、
 处理核心事件逻辑（文件操作、编辑操作、会话管理等）。
 """
@@ -10,13 +10,9 @@ import os
 from typing import Dict, Optional
 
 from PyQt5.QtCore import Qt, pyqtSlot, QEvent, QTimer
-from PyQt5.QtGui import QFontMetrics, QTextCursor, QTextCharFormat
+from PyQt5.QtGui import QFontMetrics
 from PyQt5.QtPrintSupport import QPrintDialog, QPrinter
-from PyQt5.QtWidgets import (
-    QWidget, QVBoxLayout,
-    QApplication, QSplitter,
-    QFileDialog,
-)
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QApplication
 
 from qfluentwidgets import (
     FluentWindow, NavigationItemPosition, PushButton, RoundMenu,
@@ -34,7 +30,6 @@ from src.ui.search_bar import SearchBar
 from src.ui.status_bar import StatusBar
 from src.ui.welcome_page import WelcomePage
 from src.ui.menu_manager import MenuBarManager
-from src.ui.search_result_panel import SearchResultPanel
 from src.ui.system_tray_icon import SystemTrayIcon
 from src.ui.settings_page import SettingsPage
 
@@ -57,8 +52,8 @@ class MainWindow(FluentWindow):
     """! @brief 琉璃编辑器主窗口类（编排器）
 
     基于PyQt5和PyQt-Fluent-Widgets的FluentWindow构建的主窗口，
-    作为编排器组合子组件（WelcomePage、MenuBarManager、
-    SearchResultPanel），负责信号连接与核心事件处理。
+    作为编排器组合子组件（WelcomePage、MenuBarManager），
+    负责信号连接与核心事件处理。
     """
 
     MIN_WIDTH = AppConstant.MIN_WINDOW_WIDTH
@@ -78,7 +73,6 @@ class MainWindow(FluentWindow):
         self.setAcceptDrops(True)
 
         self._menu_manager = None
-        self._search_result_panel = None
 
         self._logger = get_logger("MainWindow")
         self._logger.info("MainWindow init")
@@ -134,14 +128,6 @@ class MainWindow(FluentWindow):
             NavigationItemPosition.BOTTOM,
             isTransparent=True,
         )
-
-        self._search_result_panel = SearchResultPanel(
-            tab_manager=self._tab_manager,
-            signal_bus=self._signal_bus,
-        )
-        self._search_result_panel.set_tab_widget_ref(self._tab_widget)
-        self._splitter.addWidget(self._search_result_panel)
-        self._search_result_panel.hide()
 
         self._menu_manager = MenuBarManager(
             action_manager=self._action_manager,
@@ -651,13 +637,7 @@ class MainWindow(FluentWindow):
         self._tab_widget.setAttribute(Qt.WA_TransparentForMouseEvents)
         self._tab_widget.hide()
 
-        # 水平分割：左侧编辑器区，右侧查找结果面板（面板默认隐藏）
-        self._splitter = QSplitter(Qt.Horizontal, self._editor_interface)
-        self._splitter.setChildrenCollapsible(False)
-        self._splitter.setHandleWidth(1)
-        self._splitter.addWidget(self._tab_widget.stackedWidget)
-
-        layout.addWidget(self._splitter, 1)
+        layout.addWidget(self._tab_widget.stackedWidget, 1)
 
         self._search_bar = SearchBar(self._editor_interface)
         self._search_bar.setAccessibleName("查找栏")
@@ -838,7 +818,7 @@ class MainWindow(FluentWindow):
         """! @brief 连接所有信号与槽
 
         包括标签页管理、文件操作、主题切换、搜索等信号，
-        以及子组件（WelcomePage、MenuBarManager、SearchResultPanel）的信号。
+        以及子组件（WelcomePage、MenuBarManager）的信号。
         """
         self._tab_manager.tab_switched.connect(self._on_tab_changed)
         self._tab_manager.tab_closed.connect(self._on_tab_closed_update)
@@ -890,8 +870,6 @@ class MainWindow(FluentWindow):
             self._on_syntax_auto_detect_changed
         )
         self._menu_manager.language_selected.connect(self._on_language_selected)
-
-        self._search_result_panel.navigate_to_match.connect(self._on_search_result_navigate)
 
         self._settings_interface.theme_change_requested.connect(
             lambda theme: self._theme_service.apply_theme(QApplication.instance(), theme)
@@ -1883,49 +1861,7 @@ class MainWindow(FluentWindow):
                 msg.exec()
 
     # ========================================================================
-    # 搜索结果导航（SearchResultPanel信号槽）
-    # ========================================================================
-
-    def _on_search_result_navigate(self, tab_index: int, line_num: int, search_text: str) -> None:
-        """! @brief 搜索结果导航槽
-
-        由 SearchResultPanel.navigate_to_match 信号触发，
-        切换到目标标签页，定位到目标行，高亮匹配词。
-
-        @param tab_index  目标标签页索引
-        @param line_num   目标行号
-        @param search_text 搜索文本
-        """
-        self._tab_manager.switch_to_tab(tab_index)
-
-        editor = self._tab_manager.get_editor(tab_index)
-        if editor is None:
-            return
-
-        editor.goto_line(line_num)
-
-        import re
-        try:
-            pattern = re.compile(re.escape(search_text), re.IGNORECASE)
-            content = editor.toPlainText()
-            matches = [(m.start(), m.end()) for m in pattern.finditer(content)]
-            editor.clear_highlights()
-            editor.highlight_matches(matches)
-
-            lines = content.split('\n')
-            if line_num <= len(lines):
-                line_start = sum(len(l) + 1 for l in lines[:line_num - 1])
-                for start, end in matches:
-                    if start >= line_start:
-                        editor.goto_match(start, end)
-                        break
-        except re.error:
-            pass
-
-        editor.setFocus()
-
-    # ========================================================================
-    # 打印与导出PDF
+    # 打印
     # ========================================================================
 
     def _on_print(self) -> None:
@@ -1946,47 +1882,6 @@ class MainWindow(FluentWindow):
         except Exception as e:
             self._logger.error(f"打印失败: {e}")
             MessageBox("打印失败", f"打印时发生错误：\n{str(e)}", self).exec_()
-
-    def _export_pdf(self) -> None:
-        """! @brief 导出当前编辑器内容为PDF"""
-        editor = self._tab_widget.current_editor()
-        if editor is None:
-            MessageBox("请先打开文件", "没有打开的文件可供导出。", self).exec_()
-            return
-
-        file_path, _ = QFileDialog.getSaveFileName(
-            self, "导出PDF", "", "PDF文件 (*.pdf)"
-        )
-        if not file_path:
-            return
-
-        try:
-            printer = QPrinter(QPrinter.HighResolution)
-            printer.setOutputFormat(QPrinter.PdfFormat)
-            printer.setOutputFileName(file_path)
-            printer.setPageMargins(
-                AppConstant.PDF_MARGIN_MM, AppConstant.PDF_MARGIN_MM,
-                AppConstant.PDF_MARGIN_MM, AppConstant.PDF_MARGIN_MM,
-                QPrinter.Millimeter,
-            )
-
-            doc = editor.document().clone()
-            doc.setTextWidth(printer.pageRect(QPrinter.DevicePixel).width())
-
-            cursor = QTextCursor(doc)
-            cursor.select(QTextCursor.Document)
-            fmt = QTextCharFormat()
-            fmt.setFontFamily(editor.font().family())
-            fmt.setFontPointSize(10)
-            cursor.mergeCharFormat(fmt)
-
-            doc.print_(printer)
-
-            doc.deleteLater()
-            self._status_bar_widget.show_message("PDF 导出成功", AppConstant.STATUS_MESSAGE_DURATION_MS)
-        except Exception as e:
-            self._logger.error(f"PDF export failed: {e}")
-            MessageBox("导出失败", f"导出PDF时发生错误：\n{str(e)}", self).exec_()
 
     # ========================================================================
     # 全屏
@@ -2156,10 +2051,6 @@ class MainWindow(FluentWindow):
     # 公共接口方法（供 ActionManager 等外部模块调用）
     # ========================================================================
 
-    def export_pdf(self) -> None:
-        """! @brief 导出当前编辑器内容为PDF（公共接口）"""
-        self._export_pdf()
-
     def confirm_close_unsaved_tab(self, index: int) -> Optional[str]:
         """! @brief 对未保存标签弹出关闭确认对话框（公共接口）
 
@@ -2171,13 +2062,6 @@ class MainWindow(FluentWindow):
     def show_welcome_page(self) -> None:
         """! @brief 切换到欢迎页标签（公共接口）"""
         self._show_welcome_page()
-
-    def find_in_files(self) -> None:
-        """! @brief 多文件查找入口（公共接口）
-
-        委托给 SearchResultPanel.find_in_files() 执行。
-        """
-        self._search_result_panel.find_in_files()
 
     # ========================================================================
     # 公共查询方法

@@ -28,8 +28,6 @@ class AppConstant:
     HIGHLIGHT_DISABLE_THRESHOLD = 5 * 1024 * 1024
     ## 哈希计算分块读取大小（字节），64KB
     HASH_CHUNK_SIZE = 64 * 1024
-    ## PDF 导出页边距（毫米）
-    PDF_MARGIN_MM = 15
 
     ## 最近文件列表最大条数
     MAX_RECENT_FILES = 20
@@ -52,17 +50,9 @@ class AppConstant:
 
     ## 批量替换确认阈值
     BATCH_REPLACE_CONFIRM_THRESHOLD = 500
-    ## 多文件搜索标签页数量警告阈值
-    MULTI_FILE_SEARCH_TAB_WARNING = 20
-    ## 搜索结果行截断长度
-    SEARCH_RESULT_LINE_TRUNCATE = 150
     ## 最近文件路径显示截断长度
     RECENT_FILE_PATH_TRUNCATE = 80
 
-    ## 查找结果面板最小宽度（像素）
-    SEARCH_PANEL_MIN_WIDTH = 180
-    ## 查找结果面板最大宽度（像素）
-    SEARCH_PANEL_MAX_WIDTH = 400
     ## 欢迎页卡片最大宽度（像素）
     WELCOME_CARD_MAX_WIDTH = 700
     ## 欢迎页卡片最大高度（像素）

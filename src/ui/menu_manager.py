@@ -195,9 +195,6 @@ class MenuBarManager(QObject):
         menu.addAction(am.get_action("reload"))
         menu.addSeparator()
 
-        menu.addAction(am.get_action("export_pdf"))
-        menu.addSeparator()
-
         print_action = Action("打印(&P)...", self)
         print_action.setShortcut(QKeySequence("Ctrl+P"))
         print_action.triggered.connect(self.print_requested.emit)
@@ -237,7 +234,6 @@ class MenuBarManager(QObject):
         menu.addAction(am.get_action("find"))
         menu.addAction(am.get_action("replace"))
         menu.addAction(am.get_action("goto_line"))
-        menu.addAction(am.get_action("find_in_files"))
         menu.addSeparator()
 
         line_ops_menu = RoundMenu("行操作", self.parent())

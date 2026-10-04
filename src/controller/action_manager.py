@@ -67,7 +67,6 @@ class ActionManager(QObject):
     SHORTCUT_GOTO_LINE = QKeySequence("Ctrl+G")
     SHORTCUT_FIND_NEXT = QKeySequence("F3")
     SHORTCUT_FIND_PREV = QKeySequence("Shift+F3")
-    SHORTCUT_FIND_IN_FILES = QKeySequence("Ctrl+Shift+F")
     # @}
 
     ## @name 视图与工具快捷键
@@ -137,7 +136,6 @@ class ActionManager(QObject):
         self._register("save_as", FluentIcon.SAVE_AS, "另存为(&A)...", self._on_save_as, self.SHORTCUT_SAVE_AS)
         self._register("close_tab", FluentIcon.CLOSE, "关闭标签(&W)", self._on_close_tab, self.SHORTCUT_CLOSE_TAB)
         self._register("reload", FluentIcon.SYNC, "重新加载(&R)", self._on_reload, None)
-        self._register("export_pdf", FluentIcon.SAVE, "导出PDF...", self._on_export_pdf, None)
         self._register("quit", FluentIcon.CANCEL, "退出(&Q)", self._on_quit, self.SHORTCUT_QUIT)
         self._register("minimize_to_tray", FluentIcon.MINIMIZE, "最小化到托盘(&M)", self._on_minimize_to_tray, None)
 
@@ -158,7 +156,6 @@ class ActionManager(QObject):
         self._register("goto_line", FluentIcon.MOVE, "转到行(&G)...", self._on_goto_line, self.SHORTCUT_GOTO_LINE)
         self._register("find_next", FluentIcon.DOWN, "查找下一个", self._on_find_next, self.SHORTCUT_FIND_NEXT)
         self._register("find_prev", FluentIcon.UP, "查找上一个", self._on_find_prev, self.SHORTCUT_FIND_PREV)
-        self._register("find_in_files", FluentIcon.SEARCH, "在文件中查找(&F)...", self._on_find_in_files, self.SHORTCUT_FIND_IN_FILES)
 
         # 视图控制
         self._register("toggle_line_numbers", FluentIcon.LABEL, "显示行号(&L)", self._on_toggle_line_numbers, None)
@@ -422,16 +419,6 @@ class ActionManager(QObject):
                 self._tab_manager.mark_saved(current_index, file_path)
         except Exception as e:
             self._logger.error(f"Save as error: {e}")
-
-    @pyqtSlot()
-    def _on_export_pdf(self) -> None:
-        """! 导出PDF槽函数
-
-        将当前编辑器内容导出为PDF文件。
-        导出逻辑由主窗口的 export_pdf 公共方法实现。
-        """
-        if hasattr(self._main_window, 'export_pdf'):
-            self._main_window.export_pdf()
 
     @pyqtSlot()
     def _on_close_tab(self) -> None:
@@ -870,15 +857,6 @@ class ActionManager(QObject):
         match = self._search_service.advance_prev()
         if match:
             self._navigate_to_match(editor, match)
-
-    @pyqtSlot()
-    def _on_find_in_files(self) -> None:
-        """! 在文件中查找槽函数
-
-        委托给主窗口的 find_in_files 公共方法执行多文件搜索。
-        """
-        if hasattr(self._main_window, 'find_in_files'):
-            self._main_window.find_in_files()
 
     @pyqtSlot()
     def _on_quit(self) -> None:
