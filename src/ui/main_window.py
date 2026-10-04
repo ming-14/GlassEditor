@@ -201,7 +201,8 @@ class MainWindow(FluentWindow):
 
             if unsaved:
                 choice = self._confirm_close_unsaved_all_tabs(unsaved)
-                if choice == "cancel":
+                if choice is None:
+                    # "取消"按钮：_confirm_close_unsaved_all_tabs 返回 None
                     event.ignore()
                     return
                 elif choice == "save":
@@ -216,12 +217,10 @@ class MainWindow(FluentWindow):
                             event.ignore()
                             return
 
-            self._save_full_session()
-            self._signal_bus.app_minimize_to_tray.emit()
-            self.hide()
+            if not self._hide_to_tray():
+                event.ignore()
+                return
             event.ignore()
-
-            self._logger.info("已最小化到系统托盘")
         else:
             self._logger.info("MainWindow 关闭事件触发")
             unsaved = self._tab_manager.get_unsaved_tabs()
@@ -395,6 +394,41 @@ class MainWindow(FluentWindow):
         self._logger.info("从系统托盘触发退出")
         self._save_full_session()
         self.close()
+
+    def _hide_to_tray(self) -> bool:
+        """! @brief 执行"隐藏窗口到系统托盘"的公共流程
+
+        保存会话快照 → 发射 app_minimize_to_tray 信号 → 隐藏窗口
+        → 托盘气泡提示。不做未保存检查：隐藏窗口不销毁编辑状态，
+        未保存内容仍保留在标签页中。
+
+        @return True 表示窗口已隐藏到托盘；False 表示托盘不可用
+        """
+        if self._tray_icon is None:
+            self._logger.warning("托盘图标不可用，无法隐藏到托盘")
+            return False
+
+        self._save_full_session()
+        self._signal_bus.app_minimize_to_tray.emit()
+        self.hide()
+
+        self._tray_icon.show_notification(
+            "琉璃编辑器", "编辑器已最小化到系统托盘，点击图标可恢复窗口"
+        )
+        self._logger.info("已最小化到系统托盘")
+        return True
+
+    def minimize_to_tray(self) -> bool:
+        """! @brief 主动最小化到系统托盘（文件菜单入口）
+
+        与 CLOSE_TO_TRAY 配置无关：该动作表达的是"本次就隐藏到托盘"，
+        因此只要托盘图标可用即隐藏窗口，不读取"关闭时是否到托盘"的设置，
+        也不做未保存检查。
+
+        @return True 表示窗口已隐藏到托盘；False 表示未执行
+        """
+        self._logger.info("菜单触发最小化到托盘")
+        return self._hide_to_tray()
 
     def _confirm_close_unsaved_all_tabs(self, unsaved: list) -> str:
         """! @brief 对一批未保存标签弹出三选一对话框

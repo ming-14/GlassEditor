@@ -894,10 +894,11 @@ class ActionManager(QObject):
     def _on_minimize_to_tray(self):
         """! 最小化到系统托盘槽函数
 
-        通过触发 closeEvent 实现，由 closeEvent 根据
-        CLOSE_TO_TRAY 配置决定实际行为。
+        委托给 MainWindow.minimize_to_tray() 执行：只要托盘图标可用
+        就直接隐藏窗口到托盘，不受"关闭时最小化到托盘"配置影响，
+        也不触发 closeEvent，从而不会导致应用退出。
         """
         try:
-            self._main_window.close()
+            self._main_window.minimize_to_tray()
         except Exception as e:
             self._logger.error(f"最小化到托盘操作异常: {e}")
