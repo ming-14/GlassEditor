@@ -134,8 +134,6 @@ class WelcomePage(QWidget):
             ("--- 视图 ---", [
                 ("放大/缩小", "Ctrl+滚轮"),
                 ("全屏", "F11"),
-                ("垂直分屏", "Ctrl+Alt+V"),
-                ("水平分屏", "Ctrl+Alt+H"),
             ]),
         ]
 

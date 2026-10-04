@@ -259,9 +259,6 @@ class TabManager(QObject):
         """
         获取当前激活标签的编辑器
 
-        @note 此方法仅返回标签页对应的编辑器。
-              需要获取含分屏的活跃编辑器时，请使用 FocusManager.get_active_editor()。
-
         @return: CodeEditor 实例，无编辑器时返回 None
         """
         current = self._tab_widget.currentIndex()
@@ -272,9 +269,6 @@ class TabManager(QObject):
     def get_current_file_path(self) -> Optional[str]:
         """
         获取当前激活标签的文件路径
-
-        @note 此方法仅返回标签页对应的文件路径。
-              需要获取含分屏的活跃文件路径时，请使用 FocusManager.get_active_file_path()。
 
         @return: 文件路径字符串，新建文件或无标签时返回 None
         """

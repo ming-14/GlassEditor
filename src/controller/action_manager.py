@@ -29,7 +29,6 @@ if TYPE_CHECKING:
     from src.service.config_service import ConfigService
     from src.service.search_service import SearchService
     from src.controller.tab_manager import TabManager
-    from src.controller.focus_manager import FocusManager
 
 
 class ActionManager(QObject):
@@ -84,12 +83,9 @@ class ActionManager(QObject):
     SHORTCUT_ZOOM_RESET  = QKeySequence("Ctrl+0")
     # @}
 
-    ## @name 窗口与分屏快捷键
+    ## @name 窗口快捷键
     # @{
     SHORTCUT_FULLSCREEN       = QKeySequence("F11")
-    SHORTCUT_SPLIT            = QKeySequence("Ctrl+/")
-    SHORTCUT_SPLIT_VERTICAL   = QKeySequence("Ctrl+Alt+V")
-    SHORTCUT_SPLIT_HORIZONTAL = QKeySequence("Ctrl+Alt+H")
     # @}
 
     def __init__(
@@ -99,7 +95,6 @@ class ActionManager(QObject):
         theme_service: "ThemeService",
         config_service: "ConfigService",
         tab_manager: "TabManager",
-        focus_manager: "FocusManager",
         search_service: "SearchService",
         parent: Optional[QObject] = None,
     ):
@@ -110,7 +105,6 @@ class ActionManager(QObject):
         @param theme_service 主题服务实例
         @param config_service 配置服务实例
         @param tab_manager 标签页管理器实例
-        @param focus_manager 焦点管理器实例
         @param search_service 搜索服务实例（依赖注入）
         @param parent 父对象
         """
@@ -124,7 +118,6 @@ class ActionManager(QObject):
         self._config_service = config_service
         self._shortcut_registry = ShortcutRegistry()
         self._tab_manager = tab_manager
-        self._focus_manager = focus_manager
 
         self._search_service = search_service
         self._dialog = DialogCoordinator(config_service=config_service)
@@ -175,10 +168,6 @@ class ActionManager(QObject):
         self._register("zoom_reset", FluentIcon.FIT_PAGE, "重置缩放(&R)", self._on_zoom_reset, self.SHORTCUT_ZOOM_RESET)
         self._register("fullscreen", FluentIcon.FULL_SCREEN, "全屏(&F)", self._on_fullscreen, self.SHORTCUT_FULLSCREEN)
 
-        # 分屏
-        self._register("split_vertical", FluentIcon.LAYOUT, "垂直分屏(&V)", self._on_split_vertical, self.SHORTCUT_SPLIT_VERTICAL)
-        self._register("split_horizontal", FluentIcon.LAYOUT, "水平分屏(&H)", self._on_split_horizontal, self.SHORTCUT_SPLIT_HORIZONTAL)
-
         # 工具
         self._register("show_statistics", FluentIcon.PIE_SINGLE, "统计信息(&S)", self._on_show_statistics, self.SHORTCUT_TOGGLE_STATISTICS)
         self._register("show_hash", FluentIcon.FINGERPRINT, "计算哈希(&H)...", self._on_show_hash, None)
@@ -189,6 +178,9 @@ class ActionManager(QObject):
         self._register("show_welcome", FluentIcon.HOME, "欢迎页(&W)...", self._on_show_welcome, None)
 
         self._set_checkable()
+
+        # 清理功能下线后残留在 shortcuts.json 中的历史键
+        self._shortcut_registry.prune_unregistered()
 
         # 应用用户自定义快捷键（覆盖默认值）
         self._apply_shortcuts_from_registry()
@@ -650,20 +642,6 @@ class ActionManager(QObject):
         委托给主窗口的 toggle_fullscreen 方法。
         """
         self._main_window.toggle_fullscreen()
-
-    @pyqtSlot()
-    def _on_split_vertical(self) -> None:
-        """! 垂直分屏槽函数
-
-        由 MainWindow 直接连接覆盖。
-        """
-
-    @pyqtSlot()
-    def _on_split_horizontal(self) -> None:
-        """! 水平分屏槽函数
-
-        由 MainWindow 直接连接覆盖。
-        """
 
     @pyqtSlot()
     def _on_show_statistics(self) -> None:

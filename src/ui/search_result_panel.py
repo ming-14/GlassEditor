@@ -71,8 +71,8 @@ class SearchResultPanel(QWidget):
         创建搜索输入框、查找按钮、状态标签、关闭按钮和结果树。
         """
         self.setObjectName("searchResultPanel")
-        self.setMinimumWidth(180)
-        self.setMaximumWidth(400)
+        self.setMinimumWidth(AppConstant.SEARCH_PANEL_MIN_WIDTH)
+        self.setMaximumWidth(AppConstant.SEARCH_PANEL_MAX_WIDTH)
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(6, 6, 6, 6)

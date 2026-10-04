@@ -53,6 +53,8 @@ class MenuBarManager(QObject):
     @signal move_line_up_requested() 上移行请求
     @signal move_line_down_requested() 下移行请求
     @signal case_convert_requested(str) 大小写转换请求
+    @signal syntax_auto_detect_changed(int, str) 语法自动识别开关变更，参数为(标签索引, 切换后的语言名)
+    @signal language_selected(int, str) 手动选择语言，参数为(标签索引, 语言名)
     """
 
     open_recent_file_requested = pyqtSignal(str)
@@ -68,6 +70,8 @@ class MenuBarManager(QObject):
     move_line_up_requested = pyqtSignal()
     move_line_down_requested = pyqtSignal()
     case_convert_requested = pyqtSignal(str)
+    syntax_auto_detect_changed = pyqtSignal(int, str)
+    language_selected = pyqtSignal(int, str)
 
     def __init__(
         self,
@@ -109,6 +113,7 @@ class MenuBarManager(QObject):
         self._help_menu_btn: PushButton = None
 
         self._theme_actions: dict = {}
+        self._tab_widget_ref = None
 
     def create_menu_bar(self, parent: QWidget) -> QWidget:
         """! @brief 创建Fluent风格菜单栏
@@ -269,8 +274,6 @@ class MenuBarManager(QObject):
         menu.addAction(am.get_action("toggle_line_numbers"))
         menu.addAction(am.get_action("toggle_word_wrap"))
         menu.addSeparator()
-        menu.addAction(am.get_action("split_vertical"))
-        menu.addAction(am.get_action("split_horizontal"))
         menu.addAction(am.get_action("fullscreen"))
 
         pos = self._view_menu_btn.mapToGlobal(
@@ -666,6 +669,3 @@ class MenuBarManager(QObject):
         @param tab_widget EditorTabWidget 实例
         """
         self._tab_widget_ref = tab_widget
-
-    syntax_auto_detect_changed = pyqtSignal(int, str)
-    language_selected = pyqtSignal(int, str)

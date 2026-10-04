@@ -58,16 +58,9 @@
 [Title Bar]
 [Menu Bar]
 [Command Bar（可选）]
-[Tab Bar | Editor（分屏）| Search Results Panel（可选）]
+[Tab Bar | Editor | Search Results Panel（可选）]
 [Status Bar]
 ```
-
-### 3.4 分屏原则
-
-- 支持垂直/水平分割
-- 每个分屏为独立编辑器实例
-- 最大 4 个分屏（2×2 网格），递归分割深度 ≤ 2 层
-- 焦点编辑器以更粗边框指示，操作默认作用于焦点编辑器
 
 ---
 

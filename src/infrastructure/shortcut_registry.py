@@ -5,7 +5,7 @@
 """
 
 import threading
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 from src.infrastructure.logger import get_logger
 from src.infrastructure.settings import Settings
@@ -38,6 +38,9 @@ class ShortcutRegistry(metaclass=Singleton):
 
         # 默认快捷键表，用于回退
         self._defaults: Dict[str, str] = {}
+
+        # 本次运行实际注册过的 action，用于清理历史残留键
+        self._registered: Set[str] = set()
 
         # 反向索引: shortcut_string -> set of action_names (用于冲突检测)
         self._reverse_index: Dict[str, set] = {}
@@ -120,6 +123,7 @@ class ShortcutRegistry(metaclass=Singleton):
         """
         with self._lock:
             self._defaults[action_name] = default_shortcut
+            self._registered.add(action_name)
 
             # 检查是否从配置中已有自定义快捷键
             existing = self._shortcuts.get(action_name)
@@ -170,6 +174,27 @@ class ShortcutRegistry(metaclass=Singleton):
                 self._defaults.pop(action_name, None)
                 self._save_to_settings()
                 _logger.debug("Unregistered shortcut", action=action_name)
+
+    def prune_unregistered(self) -> List[str]:
+        """
+        清理本次运行未注册的历史 action 快捷键
+
+        功能下线后，其 action_id 会残留在 shortcuts.json 中，
+        导致设置页出现无法编辑的幽灵行，并持续占用反向索引。
+
+        必须在全部动作注册完成之后调用：本方法以「本次运行注册过的 action」
+        为白名单，在此之前未完成注册的 action 会被误清理。
+
+        @return: 被清理的 action_name 列表
+        """
+        with self._lock:
+            stale = [name for name in self._shortcuts if name not in self._registered]
+            for name in stale:
+                self._remove_from_reverse_index(name, self._shortcuts.pop(name))
+            if stale:
+                self._save_to_settings()
+                _logger.info("Pruned stale shortcuts", actions=str(stale))
+            return stale
 
     def get_shortcut(self, action_name: str) -> Optional[str]:
         """

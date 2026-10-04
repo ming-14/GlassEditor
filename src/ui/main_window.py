@@ -1,8 +1,8 @@
 """! @brief 琉璃编辑器主窗口模块
 
 主窗口作为编排器(Orchestrator)，组合已提取的子组件：
-WelcomePage、MenuBarManager、SearchResultPanel、SplitViewManager、
-syntax_helper，负责创建子组件实例、连接信号与槽、
+WelcomePage、MenuBarManager、SearchResultPanel，
+负责创建子组件实例、连接信号与槽、
 处理核心事件逻辑（文件操作、编辑操作、会话管理等）。
 """
 
@@ -35,14 +35,12 @@ from src.ui.status_bar import StatusBar
 from src.ui.welcome_page import WelcomePage
 from src.ui.menu_manager import MenuBarManager
 from src.ui.search_result_panel import SearchResultPanel
-from src.ui.split_view_manager import SplitViewManager
 from src.ui.system_tray_icon import SystemTrayIcon
 from src.ui.settings_page import SettingsPage
 
 from src.controller.action_manager import ActionManager
 from src.controller.tab_manager import TabManager
 from src.controller.signal_bus import SignalBus
-from src.controller.focus_manager import FocusManager
 
 from src.service.file_service import FileService
 from src.service.theme_service import ThemeService
@@ -60,7 +58,7 @@ class MainWindow(FluentWindow):
 
     基于PyQt5和PyQt-Fluent-Widgets的FluentWindow构建的主窗口，
     作为编排器组合子组件（WelcomePage、MenuBarManager、
-    SearchResultPanel、SplitViewManager），负责信号连接与核心事件处理。
+    SearchResultPanel），负责信号连接与核心事件处理。
     """
 
     MIN_WIDTH = AppConstant.MIN_WINDOW_WIDTH
@@ -79,7 +77,6 @@ class MainWindow(FluentWindow):
         super().__init__()
         self.setAcceptDrops(True)
 
-        self._split_view_manager = None
         self._menu_manager = None
         self._search_result_panel = None
 
@@ -115,17 +112,12 @@ class MainWindow(FluentWindow):
         )
         self._tab_manager.set_config_service(self._config_service)
 
-        self._focus_manager = FocusManager(
-            tab_manager=self._tab_manager, parent=self
-        )
-
         self._action_manager = ActionManager(
             main_window=self,
             file_service=self._file_service,
             theme_service=self._theme_service,
             config_service=self._config_service,
             tab_manager=self._tab_manager,
-            focus_manager=self._focus_manager,
             search_service=self._search_service,
             parent=self,
         )
@@ -141,16 +133,6 @@ class MainWindow(FluentWindow):
             "设置",
             NavigationItemPosition.BOTTOM,
             isTransparent=True,
-        )
-
-        self._split_view_manager = SplitViewManager(
-            tab_manager=self._tab_manager,
-            signal_bus=self._signal_bus,
-            focus_manager=self._focus_manager,
-            tab_widget=self._tab_widget,
-            main_splitter=self._main_splitter,
-            splitter=self._splitter,
-            on_editor_ready=self._on_split_editor_ready,
         )
 
         self._search_result_panel = SearchResultPanel(
@@ -609,8 +591,8 @@ class MainWindow(FluentWindow):
         """! @brief 初始化编辑器子界面
 
         创建编辑器子界面容器，包含命令栏、
-        标签栏（贯穿全宽）、内容区域（splitter）、搜索栏和状态栏，
-        并将其注册为FluentWindow的子界面。
+        标签栏（贯穿全宽）、内容区域（水平分割器：编辑器 + 查找结果面板）、
+        搜索栏和状态栏，并将其注册为FluentWindow的子界面。
         菜单栏在 __init__ 中由 MenuBarManager 创建后插入布局顶部。
         """
         self._editor_interface = QWidget(self)
@@ -635,18 +617,13 @@ class MainWindow(FluentWindow):
         self._tab_widget.setAttribute(Qt.WA_TransparentForMouseEvents)
         self._tab_widget.hide()
 
-        self._main_splitter = QSplitter(Qt.Vertical, self._editor_interface)
-        self._main_splitter.setChildrenCollapsible(False)
-        self._main_splitter.setHandleWidth(1)
-
-        self._splitter = QSplitter(Qt.Horizontal, self._main_splitter)
+        # 水平分割：左侧编辑器区，右侧查找结果面板（面板默认隐藏）
+        self._splitter = QSplitter(Qt.Horizontal, self._editor_interface)
         self._splitter.setChildrenCollapsible(False)
         self._splitter.setHandleWidth(1)
-
         self._splitter.addWidget(self._tab_widget.stackedWidget)
-        self._main_splitter.addWidget(self._splitter)
 
-        layout.addWidget(self._main_splitter, 1)
+        layout.addWidget(self._splitter, 1)
 
         self._search_bar = SearchBar(self._editor_interface)
         self._search_bar.setAccessibleName("查找栏")
@@ -856,13 +833,6 @@ class MainWindow(FluentWindow):
         self._search_bar.search_prev.connect(self._on_search_prev)
         self._search_bar.search_closed.connect(self._on_search_closed)
 
-        split_v_action = self._action_manager.get_action("split_vertical")
-        if split_v_action:
-            split_v_action.triggered.connect(self._on_split_vertical)
-        split_h_action = self._action_manager.get_action("split_horizontal")
-        if split_h_action:
-            split_h_action.triggered.connect(self._on_split_horizontal)
-
         self._welcome_page.theme_changed_requested.connect(self._on_theme_change)
         self._welcome_page.new_file_requested.connect(self._on_new_tab_requested)
         self._welcome_page.open_file_requested.connect(
@@ -895,23 +865,6 @@ class MainWindow(FluentWindow):
         self._settings_interface.settings_changed.connect(
             self._on_settings_page_changed
         )
-
-    def _on_split_editor_ready(self, editor: CodeEditor) -> None:
-        """! @brief 分屏编辑器初始化完成回调
-
-        由 SplitViewManager 在创建分屏编辑器后调用，
-        负责绑定信号、设置主题配色、应用配置，
-        使分屏编辑器获得与主编辑器一致的能力。
-
-        @param editor 分屏编辑器实例
-        """
-        index = self._tab_manager.get_current_index()
-        self._bind_editor_signals(editor, index)
-
-        if self._tab_manager.get_current_editor_colors():
-            editor.set_editor_colors(self._tab_manager.get_current_editor_colors())
-
-        self._logger.debug(f"分屏编辑器初始化完成 | index={index}")
 
     def _bind_editor_signals(self, editor: CodeEditor, index: int) -> None:
         """! @brief 绑定编辑器信号
@@ -981,35 +934,8 @@ class MainWindow(FluentWindow):
     def _on_tab_changed(self, index: int) -> None:
         """! @brief 标签页切换后的处理槽
 
-        分屏模式下，标签栏控制焦点屏：
-        - 焦点在左屏(0)：标签切换改变左屏（stackedWidget自动处理）
-        - 焦点在右屏(1)：标签切换改变右屏编辑器内容，左屏不变
-
         @param index 新的标签页索引（含欢迎页标签）
         """
-        svm = getattr(self, '_split_view_manager', None)
-        fm = getattr(self, '_focus_manager', None)
-        if svm and svm.syncing_tab:
-            return
-
-        if fm and svm and svm.split_active and fm.focus_side == 1:
-            fm.set_panel_tab_index(1, index)
-            editor = self._tab_manager.get_editor(index)
-            if editor and svm.split_editor:
-                svm.split_editor.setPlainText(editor.toPlainText())
-            saved = fm.panel_tab_index[0]
-            if saved >= 0:
-                self._tab_widget.blockSignals(True)
-                self._tab_widget.stackedWidget.setCurrentIndex(saved)
-                self._tab_widget.blockSignals(False)
-            if svm.split_editor:
-                from PyQt5.QtCore import QTimer
-                QTimer.singleShot(0, svm.split_editor.setFocus)
-            return
-
-        if fm:
-            fm.set_panel_tab_index(0, index)
-
         if self._tab_widget.is_welcome_tab(index):
             self.setWindowTitle("琉璃编辑器")
             self._status_bar_widget.set_cursor_position(0, 0)
@@ -1243,8 +1169,7 @@ class MainWindow(FluentWindow):
     def _on_theme_changed_apply(self, theme_name: str) -> None:
         """! @brief 主题切换应用槽
 
-        更新主题菜单选中状态，应用主题到应用程序和各组件，
-        包含分屏编辑器的主题更新。
+        更新主题菜单选中状态，应用主题到应用程序和各组件。
         当切换到高对比度主题时，额外注入增强 QSS。
 
         @param theme_name 主题名称
@@ -1257,11 +1182,6 @@ class MainWindow(FluentWindow):
         editor_colors = self._theme_service.get_editor_colors(theme_name)
         self._logger.debug(f"[高亮] 主题变更应用 | theme={theme_name!r}")
         self._tab_manager.set_editor_colors(editor_colors)
-
-        fm = getattr(self, '_focus_manager', None)
-        if fm and fm.split_active and fm.split_editor is not None:
-            fm.split_editor.set_editor_colors(editor_colors)
-            self._logger.debug("[高亮] 分屏编辑器主题已更新")
 
         self._status_bar_widget.update_theme(colors)
         self._search_bar.update_theme(colors)
@@ -1377,32 +1297,6 @@ class MainWindow(FluentWindow):
             self._tab_manager.set_tab_meta(index, meta)
         self._status_bar_widget.set_language(language)
         self._logger.info(f"标签 [{index}] 手动选择语法高亮: {language}")
-
-    # ========================================================================
-    # 分屏视图（委托 SplitViewManager）
-    # ========================================================================
-
-    @pyqtSlot()
-    def _on_split_vertical(self) -> None:
-        """! @brief 垂直分屏处理槽
-
-        委托 SplitViewManager 切换分屏，并同步事件过滤器。
-        """
-        self._split_view_manager.remove_event_filter(self)
-        self._split_view_manager.toggle_split(Qt.Horizontal)
-        if self._split_view_manager.split_active:
-            self._split_view_manager.install_event_filter(self)
-
-    @pyqtSlot()
-    def _on_split_horizontal(self) -> None:
-        """! @brief 水平分屏处理槽
-
-        委托 SplitViewManager 切换分屏，并同步事件过滤器。
-        """
-        self._split_view_manager.remove_event_filter(self)
-        self._split_view_manager.toggle_split(Qt.Vertical)
-        if self._split_view_manager.split_active:
-            self._split_view_manager.install_event_filter(self)
 
     # ========================================================================
     # 配置与主题加载
@@ -1673,27 +1567,6 @@ class MainWindow(FluentWindow):
                     )
                 editor.set_bracket_completion(bracket_completion)
                 editor.set_auto_indent(auto_indent)
-
-        fm = getattr(self, '_focus_manager', None)
-        if fm and fm.split_active and fm.split_editor is not None:
-            split_ed = fm.split_editor
-            split_ed.set_line_numbers_visible(show_ln)
-            split_ed.set_word_wrap(word_wrap)
-            if font_family:
-                font = split_ed.font
-                font.setFamily(font_family)
-                font.setPointSize(font_size)
-                split_ed.font = font
-                split_ed.setTabStopDistance(
-                    QFontMetrics(font).horizontalAdvance(" ") * tab_width
-                )
-            else:
-                split_ed.set_font_size(font_size)
-                split_ed.setTabStopDistance(
-                    QFontMetrics(split_ed.font).horizontalAdvance(" ") * tab_width
-                )
-            split_ed.set_bracket_completion(bracket_completion)
-            split_ed.set_auto_indent(auto_indent)
 
         reduce_anim = self._config_service.get(ConfigKey.REDUCE_ANIMATION, False)
         app = QApplication.instance()
@@ -2161,21 +2034,9 @@ class MainWindow(FluentWindow):
         """! @brief 事件过滤器
 
         处理编辑器视口的右键点击事件，显示上下文菜单。
-        处理分屏模式下鼠标按下事件，根据点击位置追踪焦点侧。
-        使用 FocusManager.is_split_viewport() 替代脆弱的引用比较。
         """
-        from PyQt5.QtCore import QEvent
         from PyQt5.QtGui import QMouseEvent
-        fm = getattr(self, '_focus_manager', None)
-        svm = getattr(self, '_split_view_manager', None)
         if event.type() == QEvent.MouseButtonPress and isinstance(event, QMouseEvent):
-            if fm and svm and svm.split_active:
-                if fm.is_split_viewport(obj):
-                    svm.set_focus_side(1)
-                else:
-                    editor = self._tab_manager.get_current_editor()
-                    if editor and obj is editor.viewport():
-                        svm.set_focus_side(0)
             if event.button() == Qt.RightButton:
                 for i in range(self._tab_manager.tab_count()):
                     editor = self._tab_manager.get_editor(i)
