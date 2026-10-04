@@ -113,6 +113,7 @@
 
 **通用规则**：
 - 居中于父窗口
+- 必须传入非空 parent：自绘对话框基类 `MessageBoxBase` 的 `MaskDialogBase` 在构造时即读取 `parent.width()/height()`，传 None 会抛 AttributeError（离屏/单测场景须传宿主窗口）
 - 标题以动词开头
 - 宽度 ≤ 父窗口 80%，高度 ≤ 90%
 - 内边距 16px
