@@ -2,7 +2,7 @@
 
 以 ScrollArea 形式内嵌于 MainWindow 的 Fluent 导航接口，
 分组展示编辑器/外观/托盘等配置卡片，变更即时持久化到 ConfigService，
-并通过 settings_changed / theme_change_requested 信号通知外部刷新运行时状态。
+并通过 theme_change_requested 信号通知外部切换主题。
 
 设计依据: docs/开发规范/交互设计说明.md 11节设置交互
 """
@@ -75,7 +75,6 @@ class _SpinBoxSettingCard(SettingCard):
 
 class SettingsPage(ScrollArea):
 
-    settings_changed = pyqtSignal(dict)
     theme_change_requested = pyqtSignal(str)
 
     def __init__(
@@ -326,7 +325,6 @@ class SettingsPage(ScrollArea):
         if self._config_service:
             self._config_service.save_settings(settings)
         self._current_settings = dict(settings)
-        self.settings_changed.emit(settings)
 
     def _on_theme_combo_changed(self, _index: int) -> None:
         if self._applying:
