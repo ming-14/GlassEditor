@@ -20,6 +20,7 @@ debug*.png
 
 .idea/
 .vscode/
+.workbuddy/
 *.swp
 *.swo
 
