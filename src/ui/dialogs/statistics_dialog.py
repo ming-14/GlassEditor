@@ -63,14 +63,10 @@ class StatisticsDialog(MessageBoxBase):
         self.viewLayout.addSpacing(4)
 
         # 统计行：标签左对齐、数值右对齐加粗
-        self._chars_with_value = self._add_stat_row(
-            "字符数（含空格）：", stats["chars_with_spaces"]
-        )
-        self._chars_without_value = self._add_stat_row(
-            "字符数（不含空格）：", stats["chars_without_spaces"]
-        )
-        self._words_value = self._add_stat_row("词数：", stats["words"])
-        self._lines_value = self._add_stat_row("行数：", stats["lines"])
+        self._add_stat_row("字符数（含空格）：", stats["chars_with_spaces"])
+        self._add_stat_row("字符数（不含空格）：", stats["chars_without_spaces"])
+        self._add_stat_row("词数：", stats["words"])
+        self._add_stat_row("行数：", stats["lines"])
 
         self.viewLayout.addStretch()
 
@@ -78,15 +74,12 @@ class StatisticsDialog(MessageBoxBase):
         self.yesButton.setText("关闭")
         self.cancelButton.hide()
 
-    def _add_stat_row(self, label_text: str, value: int) -> BodyLabel:
+    def _add_stat_row(self, label_text: str, value: int) -> None:
         """! 添加一行统计信息（标签左对齐、数值右对齐）
 
         Args:
             label_text: 统计项名称
             value: 统计数值
-
-        Returns:
-            数值标签，供调用方保留引用
         """
         row = QHBoxLayout()
         row.addWidget(BodyLabel(label_text))
@@ -97,4 +90,3 @@ class StatisticsDialog(MessageBoxBase):
         row.addWidget(value_label)
 
         self.viewLayout.addLayout(row)
-        return value_label
