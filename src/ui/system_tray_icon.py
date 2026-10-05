@@ -4,7 +4,7 @@
 和左键单击激活窗口功能，以及气泡通知能力。
 """
 
-from PyQt5.QtCore import pyqtSignal, QEvent, QSize
+from PyQt5.QtCore import pyqtSignal, QSize
 from PyQt5.QtWidgets import QSystemTrayIcon, QWidget, QApplication
 
 from qfluentwidgets import RoundMenu, Action, FluentIcon
