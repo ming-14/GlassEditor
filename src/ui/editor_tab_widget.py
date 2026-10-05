@@ -55,14 +55,16 @@ class EditorTabWidget(TabWidget):
         # 欢迎页索引缓存（关闭文件标签后索引可能变化，需追踪）
         self._welcome_index: int = -1
 
-        # 配置标签栏：隐藏关闭按钮、启用拖拽排序、显示新建按钮、可滚动
-        self.tabBar.setCloseButtonDisplayMode(TabCloseButtonDisplayMode.NEVER)
+        # 配置标签栏：常驻关闭按钮、启用拖拽排序、显示新建按钮、可滚动
+        self.tabBar.setCloseButtonDisplayMode(TabCloseButtonDisplayMode.ALWAYS)
         self.tabBar.setMovable(True)
         self.tabBar.setAddButtonVisible(True)
         self.tabBar.setScrollable(True)
 
         # 连接内置信号
         self.tabAddRequested.connect(self.new_tab_requested.emit)
+        # 标签上的 X 按钮点击后统一走 tab_close_requested 流程（含未保存确认）
+        self.tabCloseRequested.connect(self.tab_close_requested.emit)
         self.currentChanged.connect(self._on_current_changed)
 
     # ========================================================================

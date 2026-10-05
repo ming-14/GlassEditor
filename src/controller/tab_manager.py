@@ -229,11 +229,7 @@ class TabManager(QObject):
         self._tab_widget.remove_tab(index)
 
         # 清理高亮器引用并重索引
-        self._highlighter_store.pop(index, None)
-        new_store = {}
-        for k, v in self._highlighter_store.items():
-            new_store[k - 1 if k > index else k] = v
-        self._highlighter_store = new_store
+        self.notify_tab_removed(index)
 
         self._logger.info(f"标签已关闭: [{index}] {title}")
         self.tab_closed.emit(index)
@@ -242,6 +238,22 @@ class TabManager(QObject):
             self._signal_bus.file_closed.emit(file_path)
 
         return True
+
+    def notify_tab_removed(self, index: int) -> None:
+        """
+        通知标签已被移除，同步高亮器索引缓存
+
+        供绕过 close_tab 直接移除标签的场景调用（如 MainWindow 关闭欢迎页）。
+        移除后其后所有标签索引前移一位，需同步 _highlighter_store 的键值，
+        否则高亮器会错位挂到其他文件上。
+
+        @param index: 被移除的标签索引
+        """
+        self._highlighter_store.pop(index, None)
+        new_store = {}
+        for k, v in self._highlighter_store.items():
+            new_store[k - 1 if k > index else k] = v
+        self._highlighter_store = new_store
 
     # ========================================================================
     # 获取编辑器与文件信息

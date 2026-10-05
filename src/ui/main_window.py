@@ -1051,6 +1051,8 @@ class MainWindow(FluentWindow):
         if self._tab_widget.is_welcome_tab(index):
             self._closing_welcome = True
             self._tab_widget.removeTab(index)
+            # 同步高亮器索引缓存，避免后续文件标签高亮器错位
+            self._tab_manager.notify_tab_removed(index)
             return
         choice = self._confirm_close_unsaved_tab(index)
         if choice == 'save':
