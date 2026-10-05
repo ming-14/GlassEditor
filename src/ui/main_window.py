@@ -748,7 +748,6 @@ class MainWindow(FluentWindow):
             "replace": FluentIcon.SEARCH_MIRROR,
             "zoom_in": FluentIcon.ZOOM_IN,
             "zoom_out": FluentIcon.ZOOM_OUT,
-            "show_settings": FluentIcon.SETTING,
             "fullscreen": FluentIcon.FULL_SCREEN,
         }
 
@@ -767,7 +766,6 @@ class MainWindow(FluentWindow):
             "zoom_in": "放大 (Ctrl+=)",
             "zoom_out": "缩小 (Ctrl+-)",
             "fullscreen": "全屏 (F11)",
-            "show_settings": "偏好设置 (Ctrl+,)",
         }
 
         command_actions = [
@@ -776,7 +774,7 @@ class MainWindow(FluentWindow):
             "cut", "copy", "paste", None,
             "find", "replace", None,
             "zoom_in", "zoom_out", None,
-            "fullscreen", None, "show_settings",
+            "fullscreen",
             None, "show_theme_menu",
         ]
 
