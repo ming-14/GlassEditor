@@ -17,7 +17,7 @@ from PyQt5.QtWidgets import (
 
 from qfluentwidgets import (
     SpinBox, ComboBox,
-    ScrollArea, StrongBodyLabel,
+    ScrollArea,
     FluentIcon,
     SettingCard, SwitchSettingCard, SettingCardGroup,
 )
@@ -57,16 +57,11 @@ class _FontComboSettingCard(SettingCard):
 
 class _SpinBoxSettingCard(SettingCard):
 
-    def __init__(self, icon, title, content=None, suffix="", parent=None):
+    def __init__(self, icon, title, content=None, parent=None):
         super().__init__(icon, title, content, parent)
         self.spinBox = SpinBox(self)
         # 宽度交给 sizeHint 计算（按取值位数自适应），固定宽度会挤压行内编辑器导致数字被裁切
         self.hBoxLayout.addWidget(self.spinBox, 0, Qt.AlignRight)
-        if suffix:
-            from qfluentwidgets import BodyLabel
-            label = BodyLabel(suffix, self)
-            label.setStyleSheet("color: #888;")
-            self.hBoxLayout.addWidget(label, 0, Qt.AlignRight)
         self.hBoxLayout.addSpacing(16)
 
 
@@ -106,10 +101,6 @@ class SettingsPage(ScrollArea):
         outer.setContentsMargins(36, 28, 36, 28)
         outer.setSpacing(4)
 
-        title = StrongBodyLabel("设置")
-        title.setStyleSheet("font-size: 24px; font-weight: bold; padding-bottom: 12px;")
-        outer.addWidget(title)
-
         self._appearance_group = self._create_appearance_group()
         self._editor_group = self._create_editor_group()
         self._tray_group = self._create_tray_group()
@@ -136,7 +127,7 @@ class SettingsPage(ScrollArea):
         group.addSettingCard(self._font_card)
 
         self._font_size_card = _SpinBoxSettingCard(
-            FluentIcon.FONT_SIZE, "字号", "编辑器字体大小 (8 ~ 24)", "px", parent=group
+            FluentIcon.FONT_SIZE, "字号", "编辑器字体大小 (8 ~ 24)", parent=group
         )
         self._font_size_card.spinBox.setRange(8, 24)
         group.addSettingCard(self._font_size_card)
@@ -150,7 +141,7 @@ class SettingsPage(ScrollArea):
         group.addSettingCard(self._theme_card)
 
         self._tab_width_card = _SpinBoxSettingCard(
-            FluentIcon.ALIGNMENT, "Tab 宽度", "按 Tab 键插入的空格数 (2 ~ 8)", "个空格", parent=group
+            FluentIcon.ALIGNMENT, "Tab 宽度", "按 Tab 键插入的空格数 (2 ~ 8)", parent=group
         )
         self._tab_width_card.spinBox.setRange(2, 8)
         group.addSettingCard(self._tab_width_card)
