@@ -60,7 +60,7 @@ class _SpinBoxSettingCard(SettingCard):
     def __init__(self, icon, title, content=None, suffix="", parent=None):
         super().__init__(icon, title, content, parent)
         self.spinBox = SpinBox(self)
-        self.spinBox.setFixedWidth(100)
+        # 宽度交给 sizeHint 计算（按取值位数自适应），固定宽度会挤压行内编辑器导致数字被裁切
         self.hBoxLayout.addWidget(self.spinBox, 0, Qt.AlignRight)
         if suffix:
             from qfluentwidgets import BodyLabel
