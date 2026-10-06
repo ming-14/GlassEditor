@@ -21,6 +21,7 @@ debug*.png
 .idea/
 .vscode/
 .workbuddy/
+.workbuddy-ai/
 *.swp
 *.swo
 

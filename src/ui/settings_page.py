@@ -137,7 +137,6 @@ class SettingsPage(ScrollArea):
         )
         self._theme_card.comboBox.addItem("浅色", userData="light")
         self._theme_card.comboBox.addItem("深色", userData="dark")
-        self._theme_card.comboBox.addItem("高对比度", userData="high_contrast")
         group.addSettingCard(self._theme_card)
 
         self._tab_width_card = _SpinBoxSettingCard(

@@ -23,44 +23,12 @@ class ThemeService(QObject, metaclass=QSingleton):
     THEME_LIGHT = "light"
     ##! 深色主题标识
     THEME_DARK = "dark"
-    ##! 高对比主题标识
-    THEME_HIGH_CONTRAST = "high_contrast"
 
     ##! 主题名称到 Fluent Theme 枚举的映射
     _FLUENT_THEME_MAP: Dict[str, Theme] = {
         THEME_LIGHT: Theme.LIGHT,
         THEME_DARK: Theme.DARK,
-        THEME_HIGH_CONTRAST: Theme.DARK,
     }
-
-    ##! 高对比度主题专用 Fluent 组件样式（覆盖深色主题默认样式）
-    HIGH_CONTRAST_QSS = """
-        /* 主窗口背景增强对比 */
-        FluentWindowBase {
-            background-color: #000000;
-        }
-        /* 命令栏按钮文字更高对比 */
-        QPushButton {
-            color: #FFFFFF;
-        }
-        /* 菜单按钮文字更亮 */
-        QPushButton[menuButton="true"] {
-            color: #FFFFFF;
-            font-weight: bold;
-        }
-        /* 标签栏增强 */
-        QTabBar::tab {
-            color: #CCCCCC;
-        }
-        QTabBar::tab:selected {
-            color: #FFFFFF;
-            font-weight: bold;
-        }
-        /* 分隔线更明显 */
-        QFrame[class="Separator"] {
-            color: #666666;
-        }
-    """
 
     def __init__(self, signal_bus=None, parent: Optional[QObject] = None):
         """!@brief 构造主题服务实例
@@ -76,7 +44,6 @@ class ThemeService(QObject, metaclass=QSingleton):
         self._themes: Dict[str, Dict[str, str]] = {
             self.THEME_LIGHT: self._build_light_theme(),
             self.THEME_DARK: self._build_dark_theme(),
-            self.THEME_HIGH_CONTRAST: self._build_high_contrast_theme(),
         }
 
     @staticmethod
@@ -209,74 +176,6 @@ class ThemeService(QObject, metaclass=QSingleton):
             "syntax_error_bg": "#3A1F1F",
         }
 
-    @staticmethod
-    def _build_high_contrast_theme() -> Dict[str, str]:
-        """!@brief 构建高对比度编辑器配色方案
-
-        核心配色：背景纯黑，文字纯白，关键字亮黄，注释亮绿，
-        当前行背景深灰，适合视力障碍用户使用。
-
-        @return 高对比度配色字典
-        """
-        return {
-            "bg_base": "#000000",
-            "text_primary": "#FFFFFF",
-            "text_secondary": "#CCCCCC",
-            "accent": "#FFFF00",
-            "editor_bg": "#000000",
-            "editor_fg": "#FFFFFF",
-            "line_number_bg": "#000000",
-            "line_number_fg": "#888888",
-            "line_number_current_fg": "#FFFF00",
-            "current_line_bg": "#333333",
-            "selection_bg": "#666666",
-            "cursor": "#FFFFFF",
-            "bracket_match_bg": "#555500",
-            "bracket_match_fg": "#FFFF00",
-            "search_highlight_bg": "#555500",
-            "search_highlight_border": "#FFFF00",
-            "whitespace_fg": "#444444",
-            "terminal_bg": "#000000",
-            "terminal_fg": "#FFFFFF",
-            "terminal_input_bg": "#1A1A1A",
-            "terminal_input_border": "#555555",
-            "terminal_path_fg": "#CCCCCC",
-            "status_fg": "#FFFFFF",
-            "status_saved_fg": "#00FF00",
-            "status_modified_fg": "#FF6666",
-            "status_separator_fg": "#888888",
-            "search_info_fg": "#FFFFFF",
-            "search_no_match_fg": "#FF6666",
-            # 语法高亮配色
-            "syntax_keyword": "#FFFF00",
-            "syntax_string": "#00FF00",
-            "syntax_comment": "#00FF00",
-            "syntax_number": "#FFFF00",
-            "syntax_decorator": "#FFFF00",
-            "syntax_builtin": "#FFFF00",
-            "syntax_tag": "#FFFF00",
-            "syntax_attribute": "#FFFF00",
-            "syntax_selector": "#FFFF00",
-            "syntax_property": "#FFFF00",
-            "syntax_heading": "#FFFF00",
-            "syntax_bold": "#FFFFFF",
-            "syntax_italic": "#FFFFFF",
-            "syntax_code": "#FFFF00",
-            "syntax_link": "#FFFF00",
-            "syntax_list": "#FFFF00",
-            "syntax_blockquote": "#00FF00",
-            "syntax_preprocessor": "#FFFF00",
-            "syntax_regex": "#FFFF00",
-            "syntax_variable": "#FFFF00",
-            "syntax_command": "#FFFF00",
-            "syntax_doctype": "#FFFF00",
-            "syntax_pi": "#FFFF00",
-            "syntax_annotation": "#FFFF00",
-            "syntax_bool": "#FFFF00",
-            "syntax_error_border": "#FF0000",
-            "syntax_error_bg": "#330000",
-        }
-
     def get_theme(self, name: str) -> Dict[str, str]:
         """!@brief 获取指定名称的配色方案
 
@@ -306,7 +205,7 @@ class ThemeService(QObject, metaclass=QSingleton):
         Fluent 组件自带样式，无需手动设置 QSS。
 
         @param app QApplication 实例
-        @param name 主题名称（light / dark / high_contrast）
+        @param name 主题名称（light / dark）
         @param force 是否强制应用（即使主题未变化也发射信号）
         """
         if name not in self._themes:

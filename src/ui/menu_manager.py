@@ -258,7 +258,7 @@ class MenuBarManager(QObject):
         am = self._action_manager
 
         theme_menu = RoundMenu("主题", self.parent())
-        self._populate_theme_menu(theme_menu)
+        self.populate_theme_menu(theme_menu)
         menu.addMenu(theme_menu)
         menu.addSeparator()
 
@@ -529,7 +529,7 @@ class MenuBarManager(QObject):
         swap_action.triggered.connect(lambda: self.case_convert_requested.emit("swap"))
         menu.addAction(swap_action)
 
-    def _populate_theme_menu(self, menu: RoundMenu) -> None:
+    def populate_theme_menu(self, menu: RoundMenu) -> None:
         """! @brief 填充主题子菜单
 
         创建浅色/深色主题切换动作，当前主题默认选中。
@@ -539,7 +539,6 @@ class MenuBarManager(QObject):
         theme_names = {
             "light": "浅色(&L)",
             "dark": "深色(&D)",
-            "high_contrast": "高对比(&H)",
         }
         current_theme = self._theme_service.get_current_theme()
         self._theme_actions = {}
@@ -553,15 +552,6 @@ class MenuBarManager(QObject):
             )
             self._theme_actions[theme_id] = action
             menu.addAction(action)
-
-    def populate_theme_menu(self, menu: RoundMenu) -> None:
-        """! @brief 填充主题子菜单（公共接口）
-
-        替代直接访问 _populate_theme_menu 私有方法。
-
-        @param menu 目标RoundMenu
-        """
-        self._populate_theme_menu(menu)
 
     def _populate_zoom_menu(self, menu: RoundMenu) -> None:
         """! @brief 填充缩放子菜单

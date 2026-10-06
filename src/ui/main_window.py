@@ -1178,7 +1178,6 @@ class MainWindow(FluentWindow):
         """! @brief 主题切换应用槽
 
         更新主题菜单选中状态，应用主题到应用程序和各组件。
-        当切换到高对比度主题时，额外注入增强 QSS。
 
         @param theme_name 主题名称
         """
@@ -1195,24 +1194,6 @@ class MainWindow(FluentWindow):
         self._search_bar.update_theme(colors)
         if self._welcome_page:
             self._welcome_page.update_theme_buttons(theme_name)
-        self._apply_high_contrast_qss(theme_name)
-
-    def _apply_high_contrast_qss(self, theme_name: str) -> None:
-        """! @brief 高对比度主题时注入/移除增强 QSS
-
-        @param theme_name 当前主题名称
-        """
-        if theme_name == ThemeService.THEME_HIGH_CONTRAST:
-            if not getattr(self, '_high_contrast_qss_applied', False):
-                current = self.styleSheet()
-                self.setStyleSheet(current + ThemeService.HIGH_CONTRAST_QSS)
-                self._high_contrast_qss_applied = True
-        else:
-            if getattr(self, '_high_contrast_qss_applied', False):
-                current = self.styleSheet()
-                stripped = current.replace(ThemeService.HIGH_CONTRAST_QSS, "")
-                self.setStyleSheet(stripped)
-                self._high_contrast_qss_applied = False
 
     def _on_theme_change(self, theme_id: str) -> None:
         """! @brief 主题切换处理
@@ -1316,7 +1297,11 @@ class MainWindow(FluentWindow):
         从配置服务读取主题设置并应用。
         """
         config = self._config_service.load_settings()
-        theme = config.get(ConfigKey.THEME, "dark")
+        theme = config.get(ConfigKey.THEME, ThemeService.THEME_DARK)
+        if theme not in self._theme_service.get_available_themes():
+            theme = ThemeService.THEME_DARK
+            ## 写回归一化值，使设置页下拉框不再回显已移除的主题名
+            self._config_service.set(ConfigKey.THEME, theme)
         self._theme_service.apply_theme(QApplication.instance(), theme)
 
     def _restore_session(self) -> None:
