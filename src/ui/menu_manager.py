@@ -553,6 +553,16 @@ class MenuBarManager(QObject):
             self._theme_actions[theme_id] = action
             menu.addAction(action)
 
+    def set_checked_theme(self, theme_id: str) -> None:
+        """! @brief 设置主题菜单的选中项
+
+        菜单未填充时 _theme_actions 为空，此时为空操作。
+
+        @param theme_id 主题标识符
+        """
+        for tid, action in self._theme_actions.items():
+            action.setChecked(tid == theme_id)
+
     def _populate_zoom_menu(self, menu: RoundMenu) -> None:
         """! @brief 填充缩放子菜单
 

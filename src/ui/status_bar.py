@@ -24,10 +24,14 @@ from src.infrastructure.encoding_utils import (
 
 _logger = get_logger("StatusBar")
 
-## 暗色主题下状态栏文字默认前景色（WCAG AA 标准：与 #1E1E1E 背景对比度 >= 4.5:1）
-_STATUS_FG_DARK = "#C8C8C8"
-## 浅色主题下状态栏文字默认前景色
-_STATUS_FG_LIGHT = "#555555"
+## 状态栏默认配色，取值与深色主题表一致；主题加载后由 update_theme 覆盖
+## fg 与 #1E1E1E 背景的对比度在 4.5:1 以上（WCAG AA）
+_DEFAULT_COLORS = {
+    "fg": "#C8C8C8",
+    "saved_fg": "#4CAF50",
+    "modified_fg": "#EF5350",
+    "separator_fg": "#555555",
+}
 
 
 class StatusBar(QWidget):
@@ -129,12 +133,7 @@ class StatusBar(QWidget):
 
         @return: 颜色配置字典
         """
-        return {
-            "fg": _STATUS_FG_DARK,
-            "saved_fg": "#4CAF50",
-            "modified_fg": "#FF9800",
-            "separator_fg": "#555555",
-        }
+        return dict(_DEFAULT_COLORS)
 
     def _apply_style(self) -> None:
         """应用状态栏样式"""
@@ -154,10 +153,10 @@ class StatusBar(QWidget):
         @param theme: 主题颜色配置字典
         """
         self._colors = {
-            "fg": theme.get("status_fg", _STATUS_FG_DARK),
-            "saved_fg": theme.get("status_saved_fg", "#4CAF50"),
-            "modified_fg": theme.get("status_modified_fg", "#FF9800"),
-            "separator_fg": theme.get("status_separator_fg", "#555555"),
+            "fg": theme.get("status_fg", _DEFAULT_COLORS["fg"]),
+            "saved_fg": theme.get("status_saved_fg", _DEFAULT_COLORS["saved_fg"]),
+            "modified_fg": theme.get("status_modified_fg", _DEFAULT_COLORS["modified_fg"]),
+            "separator_fg": theme.get("status_separator_fg", _DEFAULT_COLORS["separator_fg"]),
         }
         self._apply_style()
         self.set_modified("未保存" in self._modified_label.text())

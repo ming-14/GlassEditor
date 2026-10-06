@@ -1182,8 +1182,7 @@ class MainWindow(FluentWindow):
         @param theme_name 主题名称
         """
         if self._menu_manager:
-            for tid, action in getattr(self._menu_manager, "_theme_actions", {}).items():
-                action.setChecked(tid == theme_name)
+            self._menu_manager.set_checked_theme(theme_name)
 
         colors = self._theme_service.get_theme(theme_name)
         editor_colors = self._theme_service.get_editor_colors(theme_name)
